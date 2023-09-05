@@ -30,12 +30,15 @@ parser = argparse.ArgumentParser(description='Show read count and base pair coun
 ## Add attribute 'filename' (the .fastq input file) to object 'parser'
 parser.add_argument('filename', nargs='+', type=ext_check('.fastq', argparse.FileType('r')))
 
+## Add attribute '--outputType' to object 'parser'
+parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L'], help="--outputType S for simple statistics, --outputType L for list of all read lengths")
+
 args = parser.parse_args()
 
 iter = 0
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def lengthOfFastqReads(fname):
+def lengthOfFastqReads(fname, choice):
     readCount = 0
     readLengths = []
     with open(fname, 'r') as fastq:
@@ -43,10 +46,13 @@ def lengthOfFastqReads(fname):
             if(len(sequence) > 0):
                 readCount = readCount + 1
                 readLengths.append(len(sequence))
-    print("%s average read length is %i reads" % (getIsolateStr(fname), statistics.mean(readLengths)))
+    if(choice == 'S'):
+        print("%s average read length is %i base pairs" % (getIsolateStr(fname), statistics.mean(readLengths)))
+    else:
+        [print(item) for item in readLengths]
 
 ## Invoke function that counts NGS reads
-lengthOfFastqReads(args.filename[0].name)
+lengthOfFastqReads(args.filename[0].name, args.outputType)
 
 
 
