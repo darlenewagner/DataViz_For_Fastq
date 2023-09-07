@@ -64,19 +64,33 @@ def plotSingleReadLengths(readLengths, fileStr):
     fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/boxLength' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
-def plotMultiReadLenths(readLengthDF):
-    SMALL_SIZE = 22
-    MEDIUM_SIZE = 26
-    BIG_SIZE = 32
+def plotDoubleReadLenths(readLengthDF):
+    SMALL_SIZE = 28
+    MEDIUM_SIZE = 32
+    BIG_SIZE = 36
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
-    fig1, axes1 = plt.subplots(figsize=(24,19))
+    fig1, axes1 = plt.subplots(figsize=(25,19))
+    axes1.xaxis.label.set_size(MEDIUM_SIZE)
+    axes1.yaxis.label.set_size(MEDIUM_SIZE)
+    axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
+    axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
     dfCols = list(readLengthDF)
     fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
-    axes1.box(data=readLengthDF)
-    #axes1.set(ylabel='Read Counts')
-    #axes1.set(xlabel='Read Lengths')
+    readLength1 = readLengthDF[dfCols[0]]
+    readLength2 = readLengthDF[dfCols[1]]
+    filteredReadLength1 = readLength1[~np.isnan(readLength1)]
+    filteredReadLength2 = readLength2[~np.isnan(readLength2)]
+    medianprops = dict(linewidth=6, color='black')
+    whiskerprops = dict(linewidth=5, color='black')
+    capprops = dict(linewidth=5, color='black')
+    x_labels = [dfCols[0], dfCols[len(dfCols) -1]]
+    bp = axes1.boxplot([filteredReadLength1, filteredReadLength2], labels=x_labels, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops)
+    for patch, color in zip(bp['boxes'], colors):
+        patch.set_facecolor(color)
+    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    axes1.set(ylabel='Read Lengths (bp)')
+    axes1.set(xlabel='Fastq Files')
     fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/boxLen_' + fileTitle + '.png')   
-    
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
 def lengthOfFastqReads(fnames, choice):
@@ -137,7 +151,7 @@ def lengthOfFastqReads(fnames, choice):
             for index, row in readLengthDF.iterrows():
                 print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
         else:
-            plotMultiReadLenths(readLengthDF)
+            plotDoubleReadLenths(readLengthDF)
         
 
 ## Exit on error if input files exceeds 2
