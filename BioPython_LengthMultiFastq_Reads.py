@@ -46,16 +46,20 @@ args = parser.parse_args()
 
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadLengths(readLengths, fileStr):
-    SMALL_SIZE = 22
-    MEDIUM_SIZE = 26
-    BIG_SIZE = 32
+    SMALL_SIZE = 28
+    MEDIUM_SIZE = 32
+    BIG_SIZE = 36
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
     fig1, axes1 = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(15,19))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
     axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
-    bp = axes1.boxplot(readLengths, notch=False, sym='+', vert=True, whis=0.75, patch_artist=True)
+    medianprops = dict(linewidth=6, color='black')
+    whiskerprops = dict(linewidth=5, color='black')
+    capprops = dict(linewidth=5, color='black')
+    x_labels = [dfCols[0], dfCols[len(dfCols) -1]]
+    bp = axes1.boxplot(readLengths, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops)
     for patch, color in zip(bp['boxes'], colors):
         patch.set_facecolor(color)
     axes1.set_title(fileStr, fontsize = BIG_SIZE)
@@ -152,10 +156,35 @@ def lengthOfFastqReads(fnames, choice):
                 print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
         else:
             plotDoubleReadLenths(readLengthDF)
-        
+    elif((len(fnames) == 3) or (len(fnames) == 4)):
+        ii = 0
+        readLenDF = pd.Series(dtype=int)
+        readLenDF2 = pd.Series(dtype=int)
+        readLengthDF = pd.DataFrame()
+        simpFileName = []
+        while(ii < len(fnames)):
+            readLengths = []
+            with open(fnames[ii].name, 'r') as fastq:
+                for header, sequence, quality in FastqGeneralIterator(fastq):
+                    if(len(sequence) > 0):
+                        readLengths.append(len(sequence))
+            ## Convert readLengths list to pandas Series
+            readLenDF = pd.Series(readLengths)
+            simpFileName.append(getIsolateStr(fnames[ii].name))
+            fnamesl1 = simpFileName[ii].split('.')
+            if(re.search('R1', simpFileName[ii], re.IGNORECASE)):
+                fnamesl1[0] = fnamesl1[0] + '_R1'
+            elif(re.search('R2', simpFileName[ii], re.IGNORECASE)):
+                fnamesl1[0] = fnamesl1[0] + '_R2'
+            readLengthDF[fnamesl1[0]] = readLenDF
+            ii = ii + 1
+        if(choice == 'S'):
+            dfCols = list(readLengthDF)
+            for cols in dfCols:
+                print("%s average read length is %i base pairs" % (cols, readLengthDF[cols].mean() ))
 
 ## Exit on error if input files exceeds 2
-if(len(args.filename) > 2):
+if(len(args.filename) > 4):
     sys.exit("BioPython_LengthMultiFastq_Reads.py accepts only one or two .fastq files as input.")
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
