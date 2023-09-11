@@ -40,10 +40,10 @@ args = parser.parse_args()
 
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadLengths(readLengths, fileStr):
-    SMALL_SIZE = 22
-    MEDIUM_SIZE = 26
-    BIG_SIZE = 32
-    fig1, axes1 = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(14,20))
+    SMALL_SIZE = 26
+    MEDIUM_SIZE = 30
+    BIG_SIZE = 34
+    fig1, axes1 = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(14,16))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
@@ -52,12 +52,12 @@ def plotSingleReadLengths(readLengths, fileStr):
     axes1.set_title(fileStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Counts')
     axes1.set(xlabel='Read Lengths')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/readLength' + fileStr + '.png')   
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/readLength_' + fileStr + '.png')   
 ## Function to plot read lengths of two .fastq files
 def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
-    SMALL_SIZE = 20
-    MEDIUM_SIZE = 24
-    BIG_SIZE = 30
+    SMALL_SIZE = 22
+    MEDIUM_SIZE = 26
+    BIG_SIZE = 32
     fig1, axes1 = plt.subplots(nrows=2, ncols=1, sharex=True, sharey=True, figsize=(14,20))
     axes1[0].xaxis.label.set_size(MEDIUM_SIZE)
     axes1[0].yaxis.label.set_size(MEDIUM_SIZE)
@@ -67,8 +67,6 @@ def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
     axes1[0].set_title(fileStr1, fontsize = BIG_SIZE)
     axes1[0].set(ylabel='Read Counts')
     axes1[0].set(xlabel='Read Lengths')
-    #fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/readLength' + fileStr1 + '.png')   
-
     axes1[1].xaxis.label.set_size(MEDIUM_SIZE)
     axes1[1].yaxis.label.set_size(MEDIUM_SIZE)
     axes1[1].tick_params(axis='x', labelsize=SMALL_SIZE)
@@ -77,7 +75,7 @@ def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
     axes1[1].set_title(fileStr2, fontsize = BIG_SIZE)
     axes1[1].set(ylabel='Read Counts')
     axes1[1].set(xlabel='Read Lengths')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/readLen_' + fileStr1 + '_' + fileStr2 + '.png')   
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/readLen_' + fileStr1 + '_' + fileStr2 + '.png')   
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
