@@ -45,7 +45,7 @@ parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], 
 args = parser.parse_args()
 
 ## Function to plot read lengths of one .fastq file
-def plotSingleReadLengths(readLengths, fileStr):
+def plotSingleReadFile(readPHREDs, fileStr):
     SMALL_SIZE = 28
     MEDIUM_SIZE = 32
     BIG_SIZE = 36
@@ -59,7 +59,7 @@ def plotSingleReadLengths(readLengths, fileStr):
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
     x_labels = [fileStr]
-    vp = axes1.violinplot(readLengths, showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    vp = axes1.violinplot(readPHREDs, showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
     xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
     xy = np.array(xy)
@@ -77,7 +77,7 @@ def plotSingleReadLengths(readLengths, fileStr):
     fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/violinPHRED_' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
-def plotDoubleReadLenths(readLengthDF):
+def plotDoubleReadFiles(readPHREDDF):
     SMALL_SIZE = 28
     MEDIUM_SIZE = 32
     BIG_SIZE = 36
@@ -87,17 +87,17 @@ def plotDoubleReadLenths(readLengthDF):
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
     axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
-    dfCols = list(readLengthDF)
+    dfCols = list(readPHREDDF)
     fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
-    readLength1 = readLengthDF[dfCols[0]]
-    readLength2 = readLengthDF[dfCols[1]]
-    filteredReadLength1 = readLength1[~np.isnan(readLength1)]
-    filteredReadLength2 = readLength2[~np.isnan(readLength2)]
+    readPhred1 = readPHREDDF[dfCols[0]]
+    readPhred2 = readPHREDDF[dfCols[1]]
+    filteredReadPhred1 = readPhred1[~np.isnan(readPhred1)]
+    filteredReadPhred2 = readPhred2[~np.isnan(readPhred2)]
     medianprops = dict(linewidth=6, color='black')
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
     x_labels = [dfCols[0], dfCols[len(dfCols) -1]]
-    vp = axes1.violinplot([filteredReadLength1, filteredReadLength2], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    vp = axes1.violinplot([filteredReadPhred1, filteredReadPhred2], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
     xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
     xy = np.array(xy)
@@ -115,7 +115,7 @@ def plotDoubleReadLenths(readLengthDF):
     fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/violinPHRED_' + fileTitle + '.png')
 
 
-def plotMultiReadLengths(readLengthDF):
+def plotMultiReadFiles(readPHREDDF):
     SMALL_SIZE = 24
     MEDIUM_SIZE = 32
     BIG_SIZE = 36
@@ -128,27 +128,26 @@ def plotMultiReadLengths(readLengthDF):
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE, labelrotation=25)
     axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
     axes1.margins(0.1)
-    dfCols = list(readLengthDF)
+    dfCols = list(readPHREDDF)
     fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
-    filteredReadLength = {}
-    readLength = []
+    filteredReadPhred = {}
+    readPhred = []
     for col in dfCols:
-        readLength = readLengthDF[col]
-        filteredReadLength[col] = readLength[~np.isnan(readLength)]
+        readPhred = readPHREDDF[col]
+        filteredReadPhred[col] = readPhred[~np.isnan(readPhred)]
     medianprops = dict(linewidth=6, color='black')
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
     meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='#A020F0', markersize=16)
-    x_labels = list(readLengthDF)
-    #readLengthMatrix = readLengthDF.to_numpy()
+    x_labels = list(readPHREDDF)
     if(len(x_labels) == 3):
-        vp = axes1.violinplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+        vp = axes1.violinplot([filteredReadPhred[x_labels[0]], filteredReadPhred[x_labels[1]], filteredReadPhred[x_labels[2]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     elif(len(x_labels) == 4):
-        vp = axes1.violinplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+        vp = axes1.violinplot([filteredReadPhred[x_labels[0]], filteredReadPhred[x_labels[1]], filteredReadPhred[x_labels[2]], filteredReadPhred[x_labels[3]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     elif(len(x_labels) == 5):
-        vp = axes1.violinplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]], filteredReadLength[x_labels[4]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+        vp = axes1.violinplot([filteredReadPhred[x_labels[0]], filteredReadPhred[x_labels[1]], filteredReadPhred[x_labels[2]], filteredReadPhred[x_labels[3]], filteredReadPhred[x_labels[4]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     elif(len(x_labels) == 6):
-        vp = axes1.violinplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]], filteredReadLength[x_labels[4]], filteredReadLength[x_labels[5]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+        vp = axes1.violinplot([filteredReadPhred[x_labels[0]], filteredReadPhred[x_labels[1]], filteredReadPhred[x_labels[2]], filteredReadPhred[x_labels[3]], filteredReadPhred[x_labels[4]], filteredReadPhred[x_labels[5]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
     xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
     xy = np.array(xy)
@@ -172,6 +171,7 @@ def PHREDOfFastqReads(fnames, choice):
     forwardAvg = []
     reverseAvg = []
     f = 0
+## for exactly one file, invoke plotSingleReadFile
     if(len(fnames) < 2):
         with open(fnames[f].name, 'r') as fastq:
             for record in SeqIO.parse(fastq, "fastq"):
@@ -185,15 +185,15 @@ def PHREDOfFastqReads(fnames, choice):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in forwardAvg]
         else:
-            plotSingleReadLengths(forwardAvg, getIsolateStr(fnames[f].name))
-## for exactly two files, invoke plotDoubleReadLengths
+            plotSingleReadFile(forwardAvg, getIsolateStr(fnames[f].name))
+## for exactly two files, invoke plotDoubleReadFiles
     elif(len(fnames) == 2):
         with open(fnames[0].name, 'r') as fastq:
             for record in SeqIO.parse(fastq, "fastq"):
                 if(len(record.seq) > 0):
                     forwardAvg.append(statistics.mean(record.letter_annotations["phred_quality"]))
                     #print(quality)
-        ## Convert readLengths list to pandas Series
+        ## Convert read Phred scores list to pandas Series
         readPhrDF = pd.Series(forwardAvg)
         with open(fnames[1].name, 'r') as fastq2:
             for record in SeqIO.parse(fastq2, "fastq"):
@@ -213,12 +213,11 @@ def PHREDOfFastqReads(fnames, choice):
             fnamesl2[0] = fnamesl2[0] + '_R1'
         elif(re.search('R2', simpFileName2, re.IGNORECASE)):
             fnamesl2[0] = fnamesl2[0] + '_R2'
-        ## Convert readLengths2 list to pandas Series
+        ## Convert readPhred2 list to pandas Series
         readPhrDF2 = pd.Series(reverseAvg)
         ## Create pandas DataFrame with truncated fnames as column headers
         readPhredDF = pd.DataFrame({fnamesl1[0] : readPhrDF, fnamesl2[0] : readPhrDF2})
         ## Coerce string 'Nan' to np.nan
-        #readLengthDF[fnamesl2[0]] = readLengthDF[fnamesl2[0]].replace(r'Nan', np.nan, regex=True)
         if(choice == 'S'):
             print("%s total average PHRED score is %0.2f" % (fnamesl1[0], readPhredDF[fnamesl1[0]].mean() ))
             print("%s total average PHRED score is %0.2f" % (fnamesl2[0], readPhredDF[fnamesl2[0]].mean() ))
@@ -228,13 +227,13 @@ def PHREDOfFastqReads(fnames, choice):
                 print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
         else:
         ## Call funtion to plot two boxplots
-            plotDoubleReadLenths(readPhredDF)
-## for three or four files, invoke plotDoubleReadLengths
+            plotDoubleReadFiles(readPhredDF)
+## for three or four files, invoke plotMultiReadFiles
     elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
-        readLenDF = pd.Series(dtype=int)
-        readLenDF2 = pd.Series(dtype=int)
-        readLengthDF = pd.DataFrame()
+        readPhredDF = pd.Series(dtype=int)
+        readPhredDF2 = pd.Series(dtype=int)
+        readPHREDDF = pd.DataFrame()
         simpFileName = []
         while(ii < len(fnames)):
             readPHRED = []
@@ -243,32 +242,32 @@ def PHREDOfFastqReads(fnames, choice):
                     if(len(record.seq) > 0):
                         readPHRED.append(statistics.mean(record.letter_annotations["phred_quality"]))
             ## Convert readLengths list to pandas Series
-            readLenDF = pd.Series(readPHRED)
+            readPhredDF = pd.Series(readPHRED)
             simpFileName.append(getIsolateStr(fnames[ii].name))
             fnamesl1 = simpFileName[ii].split('.')
             if(re.search('R1', simpFileName[ii], re.IGNORECASE)):
                 fnamesl1[0] = fnamesl1[0] + '_R1'
             elif(re.search('R2', simpFileName[ii], re.IGNORECASE)):
                 fnamesl1[0] = fnamesl1[0] + '_R2'
-            readLengthDF[fnamesl1[0]] = readLenDF
+            readPHREDDF[fnamesl1[0]] = readPhredDF
             ii = ii + 1
         if(choice == 'S'):
-            dfCols = list(readLengthDF)
+            dfCols = list(readPHREDDF)
             for cols in dfCols:
-                print("%s total average PHRED is %0.2f" % (cols, readLengthDF[cols].mean() ))
+                print("%s total average PHRED is %0.2f" % (cols, readPHREDDF[cols].mean() ))
         elif(choice == 'L'):
-            dfCols = list(readLengthDF)
+            dfCols = list(readPHREDDF)
             for header in dfCols:
                 print("%s\t" % (header), end="")
             print()
             ii = 0
-            for index, row in readLengthDF.iterrows():
+            for index, row in readPHREDDF.iterrows():
                 for cell in dfCols:
                     print(str(row[cell]) + "\t", end="")
                 print()
         else:
         ## Call function to plot more than two boxplots
-            plotMultiReadLengths(readLengthDF)
+            plotMultiReadFiles(readPHREDDF)
             
                 
 ## Exit on error if input files exceeds 6
