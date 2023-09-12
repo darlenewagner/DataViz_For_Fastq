@@ -44,11 +44,35 @@ parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], 
 
 args = parser.parse_args()
 
+## Function to extract Fastq read length (other version extracts PHRED Quality)
+def extractData(fnames):
+    simpFileName = []
+    ii = 0
+    readPHREDDF = pd.DataFrame()
+    while(ii < len(fnames)):
+        readPHRED = []
+        ## Invoke Bio.SeqIO
+        with open(fnames[ii].name, 'r') as fastq:
+            for record in SeqIO.parse(fastq, "fastq"):
+                if(len(record.seq) > 0):
+                    readPHRED.append(statistics.mean(record.letter_annotations["phred_quality"]))
+        readPhrDF = pd.Series(readPHRED)
+        simpFileName.append(getIsolateStr(fnames[ii].name))
+        fnamesl1 = simpFileName[ii].split('.')
+        if(re.search('R1', simpFileName[ii], re.IGNORECASE)):
+            fnamesl1[0] = fnamesl1[0] + '_R1'
+        elif(re.search('R2', simpFileName[ii], re.IGNORECASE)):
+            fnamesl1[0] = fnamesl1[0] + '_R2'
+        readPHREDDF[fnamesl1[0]] = readPhrDF
+        ii = ii + 1
+    return(readPHREDDF)
+
+
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadFile(readPHREDs, fileStr):
-    SMALL_SIZE = 28
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
     fig1, axes1 = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(15,19))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
@@ -74,13 +98,13 @@ def plotSingleReadFile(readPHREDs, fileStr):
     axes1.set_title(fileStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/violinPHRED_' + fileStr + '.png')   
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinPHRED_' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
 def plotDoubleReadFiles(readPHREDDF):
-    SMALL_SIZE = 28
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
     fig1, axes1 = plt.subplots(figsize=(25,19))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
@@ -112,17 +136,16 @@ def plotDoubleReadFiles(readPHREDDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/violinPHRED_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinPHRED_' + fileTitle + '.png')
 
 
 def plotMultiReadFiles(readPHREDDF):
-    SMALL_SIZE = 24
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 30
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#00FFFF', '#FF00FF']
-
     fig1, axes1 = plt.subplots(figsize=(27,19))
-    fig1.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.2)
+    fig1.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.22)
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE, labelrotation=25)
@@ -162,7 +185,7 @@ def plotMultiReadFiles(readPHREDDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/multiViolinPHRED_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/multiViolinPHRED_' + fileTitle + '.png')
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
@@ -188,6 +211,7 @@ def PHREDOfFastqReads(fnames, choice):
             plotSingleReadFile(forwardAvg, getIsolateStr(fnames[f].name))
 ## for exactly two files, invoke plotDoubleReadFiles
     elif(len(fnames) == 2):
+        readPhredDF = pd.DataFrame()
         with open(fnames[0].name, 'r') as fastq:
             for record in SeqIO.parse(fastq, "fastq"):
                 if(len(record.seq) > 0):
@@ -216,15 +240,22 @@ def PHREDOfFastqReads(fnames, choice):
         ## Convert readPhred2 list to pandas Series
         readPhrDF2 = pd.Series(reverseAvg)
         ## Create pandas DataFrame with truncated fnames as column headers
-        readPhredDF = pd.DataFrame({fnamesl1[0] : readPhrDF, fnamesl2[0] : readPhrDF2})
+        readPhredDF = extractData(fnames)
         ## Coerce string 'Nan' to np.nan
         if(choice == 'S'):
-            print("%s total average PHRED score is %0.2f" % (fnamesl1[0], readPhredDF[fnamesl1[0]].mean() ))
-            print("%s total average PHRED score is %0.2f" % (fnamesl2[0], readPhredDF[fnamesl2[0]].mean() ))
+            dfCols = list(readPHREDDF)
+            for cols in dfCols:
+                print("%s total average PHRED is %0.2f" % (cols, readPHREDDF[cols].mean() ))
         elif(choice == 'L'):
-            print("%s\t%s" % (fnamesl1[0], fnamesl2[0]))
-            for index, row in readPhredDF.iterrows():
-                print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
+            dfCols = list(readPHREDDF)
+            for header in dfCols:
+                print("%s\t" % (header), end="")
+            print()
+            ii = 0
+            for index, row in readPHREDDF.iterrows():
+                for cell in dfCols:
+                    print(str(row[cell]) + "\t", end="")
+                print()
         else:
         ## Call funtion to plot two boxplots
             plotDoubleReadFiles(readPhredDF)
