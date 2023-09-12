@@ -44,11 +44,34 @@ parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], 
 
 args = parser.parse_args()
 
+## Function to extract Fastq read length (other version extracts PHRED Quality)
+def extractData(fnames):
+    simpFileName = []
+    ii = 0
+    readLengthDF = pd.DataFrame()
+    while(ii < len(fnames)):
+        readLengths = []
+        with open(fnames[ii].name, 'r') as fastq:
+        ## Invoke Bio.SeqIO.QualityIO
+            for header, sequence, quality in FastqGeneralIterator(fastq):
+                if(len(sequence) > 0):
+                    readLengths.append(len(sequence))
+        readLenDF = pd.Series(readLengths)
+        simpFileName.append(getIsolateStr(fnames[ii].name))
+        fnamesl1 = simpFileName[ii].split('.')
+        if(re.search('R1', simpFileName[ii], re.IGNORECASE)):
+            fnamesl1[0] = fnamesl1[0] + '_R1'
+        elif(re.search('R2', simpFileName[ii], re.IGNORECASE)):
+            fnamesl1[0] = fnamesl1[0] + '_R2'
+        readLengthDF[fnamesl1[0]] = readLenDF
+        ii = ii + 1
+    return(readLengthDF)
+
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadLengths(readLengths, fileStr):
-    SMALL_SIZE = 28
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
     fig1, axes1 = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(15,19))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
@@ -74,13 +97,13 @@ def plotSingleReadLengths(readLengths, fileStr):
     axes1.set_title(fileStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/violinLength_' + fileStr + '.png')   
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLength_' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
 def plotDoubleReadLenths(readLengthDF):
-    SMALL_SIZE = 28
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
     fig1, axes1 = plt.subplots(figsize=(25,19))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
@@ -112,17 +135,17 @@ def plotDoubleReadLenths(readLengthDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/violinLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_' + fileTitle + '.png')
 
 
 def plotMultiReadLengths(readLengthDF):
-    SMALL_SIZE = 24
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 30
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 38
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#00FFFF', '#FF00FF']
 
     fig1, axes1 = plt.subplots(figsize=(27,19))
-    fig1.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.2)
+    fig1.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.22)
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE, labelrotation=25)
@@ -163,7 +186,7 @@ def plotMultiReadLengths(readLengthDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/multiViolinLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/multiViolinLength_' + fileTitle + '.png')
 
     
 
@@ -188,69 +211,36 @@ def lengthOfFastqReads(fnames, choice):
             plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name))
 ## for exactly two files, invoke plotDoubleReadLengths
     elif(len(fnames) == 2):
-        with open(fnames[0].name, 'r') as fastq:
-            for header, sequence, quality in FastqGeneralIterator(fastq):
-                if(len(sequence) > 0):
-                    readLengths.append(len(sequence))
-        ## Convert readLengths list to pandas Series
-        readLenDF = pd.Series(readLengths)
-        with open(fnames[1].name, 'r') as fastq2:
-            for header, sequence, quality in FastqGeneralIterator(fastq2):
-                if(len(sequence) > 0):
-                    readLengths2.append(len(sequence))
-        ## Create column headers
-        simpFileName1 = getIsolateStr(fnames[0].name)
-        simpFileName2 = getIsolateStr(fnames[1].name)
-        fnamesl1 = simpFileName1.split('.')
-        if(re.search('R1', simpFileName1, re.IGNORECASE)):
-            fnamesl1[0] = fnamesl1[0] + '_R1'
-        elif(re.search('R2', simpFileName1, re.IGNORECASE)):
-            fnamesl1[0] = fnamesl1[0] + '_R2'
-        #print(fnamesl1[0])
-        fnamesl2 = simpFileName2.split('.')
-        if(re.search('R1', simpFileName2, re.IGNORECASE)):
-            fnamesl2[0] = fnamesl2[0] + '_R1'
-        elif(re.search('R2', simpFileName2, re.IGNORECASE)):
-            fnamesl2[0] = fnamesl2[0] + '_R2'
-        ## Convert readLengths2 list to pandas Series
-        readLenDF2 = pd.Series(readLengths2)
-        ## Create pandas DataFrame with truncated fnames as column headers
-        readLengthDF = pd.DataFrame({fnamesl1[0] : readLenDF, fnamesl2[0] : readLenDF2})
-        ## Coerce string 'Nan' to np.nan
-        #readLengthDF[fnamesl2[0]] = readLengthDF[fnamesl2[0]].replace(r'Nan', np.nan, regex=True)
+        readLengthDF = pd.DataFrame()
+        ## Call function 'extractData' to read multiple .fastq files
+        readLengthDF = extractData(fnames)
+        
         if(choice == 'S'):
             print("%s average read length is %i base pairs" % (fnamesl1[0], readLengthDF[fnamesl1[0]].mean() ))
             print("%s average read length is %i base pairs" % (fnamesl2[0], readLengthDF[fnamesl2[0]].mean() ))
         elif(choice == 'L'):
-            print("%s\t%s" % (fnamesl1[0], fnamesl2[0]))
+            #print("%s\t%s" % (fnamesl1[0], fnamesl2[0]))
+            #for index, row in readLengthDF.iterrows():
+            #    print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
+            dfCols = list(readLengthDF)
+            for header in dfCols:
+                print("%s\t" % (header), end="")
+            print()
+            ii = 0
             for index, row in readLengthDF.iterrows():
-                print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
+                for cell in dfCols:
+                    print(str(row[cell]) + "\t", end="")
+                print()
         else:
         ## Call funtion to plot two boxplots
             plotDoubleReadLenths(readLengthDF)
 ## for three or four files, invoke plotDoubleReadLengths
     elif((len(fnames) > 2) and (len(fnames) < 7)):
-        ii = 0
         readLenDF = pd.Series(dtype=int)
         readLenDF2 = pd.Series(dtype=int)
         readLengthDF = pd.DataFrame()
-        simpFileName = []
-        while(ii < len(fnames)):
-            readLengths = []
-            with open(fnames[ii].name, 'r') as fastq:
-                for header, sequence, quality in FastqGeneralIterator(fastq):
-                    if(len(sequence) > 0):
-                        readLengths.append(len(sequence))
-            ## Convert readLengths list to pandas Series
-            readLenDF = pd.Series(readLengths)
-            simpFileName.append(getIsolateStr(fnames[ii].name))
-            fnamesl1 = simpFileName[ii].split('.')
-            if(re.search('R1', simpFileName[ii], re.IGNORECASE)):
-                fnamesl1[0] = fnamesl1[0] + '_R1'
-            elif(re.search('R2', simpFileName[ii], re.IGNORECASE)):
-                fnamesl1[0] = fnamesl1[0] + '_R2'
-            readLengthDF[fnamesl1[0]] = readLenDF
-            ii = ii + 1
+        ## Call function 'extractData' to read multiple .fastq files
+        readLengthDF = extractData(fnames)
         if(choice == 'S'):
             dfCols = list(readLengthDF)
             for cols in dfCols:
