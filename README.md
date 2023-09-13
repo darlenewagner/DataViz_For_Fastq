@@ -22,3 +22,8 @@ Exact path to bin/python may differ according to Python version.
 `bin/pip install matplotlib`
 
 `bin/pip install pandas`
+
+## USAGE EXAMPLES
+
+#### 1. Plotting NGS reads lengths from four .fastq files
+`bin/python BioPython_LengthViolinFastq_Reads.py Viral_MiSeq/SC2_X.R1.fastq Viral_MiSeq/SC2_X.R2.fastq Viral_iSeq/SC2_Y.R1.fastq Viral_iSeq/SC2_Y.R2.fastq --outputType P`
