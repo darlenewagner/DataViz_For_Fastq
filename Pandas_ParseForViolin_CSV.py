@@ -40,9 +40,9 @@ parser.add_argument('filename', nargs='+', type=ext_check('.csv', '.txt', argpar
 
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'P'], help="--outputType S for simple statistics and --outputType P for single histogram plot")
 
-parser.add_argument('--statePlots', '-s', default='0', choices=['0', '1', '2', '3', '4'], help="--statePlots count, 0 for total only, 1 for total and one state, 2 for two states, 3 for three states, and 4 for four states")
+parser.add_argument('--statePlots', '-s', default='0', choices=['0', '1', '2', '3'], help="--statePlots count, 0 for total only, 1 for total and one state, 2 for total and two states, 3 for total and three states")
 
-#parser.add_argument('--stateCode', '-o', default='N', choices=['Y', 'N'], help="--outputType S for simple statistics and --outputType P for single histogram plot")
+parser.add_argument('--titleString', '-t', default='United States', help="--outputType S for simple statistics and --outputType P for single histogram plot")
 
 args = parser.parse_args()
 
@@ -76,14 +76,31 @@ def state_CSV_File_Processor(fname, states):
                 if(row['STATE2KX'] == '13'):
                     #print(row)
                     columns[k].append(v)
-    firstExpect = columns['e(0)']        
-    finExpect = [float(i) for i in firstExpect]
-    expectDataFrame = pd.DataFrame(finExpect, columns=['Georgia'])
+        firstExpect = columns['e(0)']        
+        firstFinExpect = [float(i) for i in firstExpect]
+        columns = defaultdict(list)
+        csvfile.seek(0)
+        for row in lineReader:
+            for (k,v) in row.items():
+                if(row['STATE2KX'] == '54'):
+                    columns[k].append(v)
+        secondExpect = columns['e(0)']        
+        secondFinExpect = [float(i) for i in secondExpect]
+        columns = defaultdict(list)
+    expectDataFrame = pd.DataFrame({'Georgia' : firstFinExpect})
+    print(expectDataFrame.shape[0])
+    print(len(secondFinExpect))
+    extend_length = expectDataFrame.shape[0] - len(secondFinExpect)
+    pad = 0
+    while(pad < extend_length):
+        secondFinExpect.append(0)
+        pad = pad + 1
+    expectDataFrame['West Virginia'] = secondFinExpect
     return(expectDataFrame)
 
 
-## plot a single violin plot annotated with mean and standard deviation
-def plotSingleViolinLifeExp(lifeExp, mean, stdDev, fileStr):
+## plot a single violin plot of life expectancy annotated with mean and standard deviation
+def plotSingleViolinLifeExp(lifeExp, mean, stdDev, fileStr, titleStr):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
@@ -93,13 +110,13 @@ def plotSingleViolinLifeExp(lifeExp, mean, stdDev, fileStr):
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
     axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
-    smean = "{:.2f}".format(mean)
-    sstdDev = "{:.2f}".format(stdDev)
+    smean = "{:.2f}".format(mean[0])
+    sstdDev = "{:.2f}".format(stdDev[0])
     annotStr = "mean = " + smean + ", sd = " + sstdDev
     medianprops = dict(linewidth=6, color='black')
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
-    x_labels = [fileStr]
+    x_labels = [titleStr]
     vp = axes1.violinplot(lifeExp, showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
     xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
@@ -115,27 +132,129 @@ def plotSingleViolinLifeExp(lifeExp, mean, stdDev, fileStr):
     axes1.set_title('U.S. ' + fileStr + ' (2010-2015)', fontsize = BIG_SIZE)
     axes1.set(ylabel='Age in Years')
     axes1.set(xlabel=annotStr)
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLifeExpr_' + fileStr + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLifeExpr_' + titleStr + '.png')
 
+## Function to plot read lengths of two life expectancy series
+def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, mean, stdDev, fileStr, titleStr):
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
+    colors = ['#00FF00', '#FFFF00', '#FFA500', '#FF0000']
+    fig1, axes1 = plt.subplots(figsize=(25,19))
+    axes1.xaxis.label.set_size(SMALL_SIZE)
+    axes1.yaxis.label.set_size(MEDIUM_SIZE)
+    axes1.tick_params(axis='x', labelsize=MEDIUM_SIZE)
+    axes1.tick_params(axis='y', labelsize=MEDIUM_SIZE)
+    tmean = "{:.2f}".format(mean[0])
+    fmean = "{:.2f}".format(mean[1])
+    annotStr = "U.S. mean = " + tmean + " and Georgia mean = " + fmean
+    #fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
+    #readLength1 = readLengthDF[dfCols[0]]
+    #readLength2 = readLengthDF[dfCols[1]]
+    #filteredReadLength1 = readLength1[~np.isnan(readLength1)]
+    #filteredReadLength2 = readLength2[~np.isnan(readLength2)]
+    medianprops = dict(linewidth=6, color='black')
+    whiskerprops = dict(linewidth=5, color='black')
+    capprops = dict(linewidth=5, color='black')
+    x_labels = ['U.S.', 'Georgia']
+    vp = axes1.violinplot([allLifeExp, stateLifeExp], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
+    xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
+    xy = np.array(xy)
+    axes1.scatter(xy[:,0], xy[:,1],s=121, c="#A020F0", marker="D", zorder=3)
+    for pc, color in zip(vp['bodies'], colors):
+        pc.set_facecolor(color)
+        pc.set_edgecolor('black')
+        pc.set_alpha(0.6)
+    vp['cmeans'].set_visible(False)
+    vp['cmedians'].set_colors('black')
+    vp['cmedians'].set_linewidth(3)
+    axes1.set_title( titleStr + ' (2010-2015)', fontsize = BIG_SIZE)
+    axes1.set(ylabel='Age in Years')
+    axes1.set(xlabel=annotStr)
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_' + titleStr + '.png')
+
+
+## Function to plot read lengths of two life expectancy series
+def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdDev, fileStr, titleStr):
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
+    colors = ['#00FF00', '#FFFF00', '#FFA500', '#FF0000']
+    fig1, axes1 = plt.subplots(figsize=(26,19))
+    axes1.xaxis.label.set_size(SMALL_SIZE)
+    axes1.yaxis.label.set_size(MEDIUM_SIZE)
+    axes1.tick_params(axis='x', labelsize=MEDIUM_SIZE)
+    axes1.tick_params(axis='y', labelsize=MEDIUM_SIZE)
+    tmean = "{:.2f}".format(mean[0])
+    fmean = "{:.2f}".format(mean[1])
+    smean = "{:.2f}".format(mean[2])
+    annotStr = "U.S. mean = " + tmean + ", Georgia mean = " + fmean + ', and West Virginia mean = ' + smean
+    #fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
+    #readLength1 = readLengthDF[dfCols[0]]
+    #readLength2 = readLengthDF[dfCols[1]]
+    #filteredReadLength1 = readLength1[~np.isnan(readLength1)]
+    #filteredReadLength2 = readLength2[~np.isnan(readLength2)]
+    medianprops = dict(linewidth=6, color='black')
+    whiskerprops = dict(linewidth=5, color='black')
+    capprops = dict(linewidth=5, color='black')
+    x_labels = ['U.S.', 'Georgia', 'West Virginia' ]
+    vp = axes1.violinplot([allLifeExp, stateLifeExp1, stateLifeExp2], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
+    xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
+    xy = np.array(xy)
+    axes1.scatter(xy[:,0], xy[:,1],s=121, c="#A020F0", marker="D", zorder=3)
+    for pc, color in zip(vp['bodies'], colors):
+        pc.set_facecolor(color)
+        pc.set_edgecolor('black')
+        pc.set_alpha(0.6)
+    vp['cmeans'].set_visible(False)
+    vp['cmedians'].set_colors('black')
+    vp['cmedians'].set_linewidth(3)
+    axes1.set_title(titleStr + ' (2010-2015)', fontsize = BIG_SIZE)
+    axes1.set(ylabel='Age in Years')
+    axes1.set(xlabel=annotStr)
+    titleStrMod = re.sub(r',', '', titleStr)
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_' + titleStrMod + '.png')
+
+
+    
 
 allLifeExpectancy = simple_CSV_File_Processor(args.filename, args.outputType)
 
 statesLifeExpect = state_CSV_File_Processor(args.filename, args.statePlots)
 
-## compute mean
-mean = statistics.mean(allLifeExpectancy)
-gmean = statistics.mean(statesLifeExpect['Georgia'])
+print(statesLifeExpect.head())
 
-## comput standard deviation
-stdDev = statistics.stdev(allLifeExpectancy)
-gstdDev = statistics.stdev(statesLifeExpect['Georgia'])
+mean = []
+stdDev = []
+
+## compute mean
+mean.append(statistics.mean(allLifeExpectancy))
+mean.append(statistics.mean(statesLifeExpect['Georgia']))
+tempSeries = statesLifeExpect['West Virginia']
+mean.append(statistics.mean(tempSeries[tempSeries!=0]))
+
+## compute standard deviation
+stdDev.append(statistics.stdev(allLifeExpectancy))
+stdDev.append(statistics.stdev(statesLifeExpect['Georgia']))
+stdDev.append(statistics.stdev(tempSeries[tempSeries!=0]))
+
 
 if(args.outputType == 'S'):  ## User selection by --outputType
     if(args.statePlots == '0'):
-        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (getIsolateStr(args.filename[0].name), mean, stdDev))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (args.titleString, mean[0], stdDev[0]))
     elif(args.statePlots == '1'):
-        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (getIsolateStr(args.filename[0].name), mean, stdDev))
-        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (list(statesLifeExpect)[0], gmean, gstdDev))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (getIsolateStr(args.filename[0].name), mean[0], stdDev[0]))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (list(statesLifeExpect)[0], mean[1], stdDev[1]))
+    elif(args.statePlots == '2'):
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (getIsolateStr(args.filename[0].name), mean[0], stdDev[0]))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (list(statesLifeExpect)[0], mean[1], stdDev[1]))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (list(statesLifeExpect)[1], mean[2], stdDev[2]))
 else:
-    plotSingleViolinLifeExp(allLifeExpectancy, mean, stdDev, getIsolateStr(args.filename[0].name))
-
+    if(args.statePlots == '0'):
+        plotSingleViolinLifeExp(allLifeExpectancy, mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
+    elif(args.statePlots == '1'):
+        plotDoubleViolinLifeExp(allLifeExpectancy, statesLifeExpect['Georgia'], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
+    elif(args.statePlots == '2'):
+        plotTripleViolinLifeExp(allLifeExpectancy, statesLifeExpect['Georgia'], tempSeries[tempSeries!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
