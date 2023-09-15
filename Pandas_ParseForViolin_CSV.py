@@ -1,11 +1,6 @@
 import os, sys, re, csv, statistics
 import argparse, logging, warnings
 
-import Bio
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.SeqIO.QualityIO import FastqGeneralIterator
-
 ## import numpy
 import numpy as np
 
