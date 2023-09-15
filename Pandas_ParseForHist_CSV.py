@@ -1,11 +1,6 @@
 import os, sys, re, csv, statistics
 import argparse, logging, warnings
 
-import Bio
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.SeqIO.QualityIO import FastqGeneralIterator
-
 ## import numpy
 import numpy as np
 
@@ -54,7 +49,6 @@ def CSV_File_Processor(fname, choice):
     finExpect = [float(i) for i in lifeExpect]
     return(finExpect)
 
-## plot a single histogram annotated with mean and standard deviation
 def plotSingleHistOfExp(readLengths, mean, stdDev, fileStr):
     SMALL_SIZE = 30
     MEDIUM_SIZE = 36
