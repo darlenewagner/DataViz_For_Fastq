@@ -48,7 +48,11 @@ stateCodesDict = {'1':'Alabama', '2':'Alaska', '4':'Arizona', '5':'Arkansas', '6
                   '9':'Connecticut', '10':'Delaware', '11':'District of Columbia', '12':'Florida', '13':'Georgia', '15':'Hawaii',
                   '16':'Idaho', '17':'Illinois', '18':'Indiana', '19':'Iowa', '20':'Kansas', '21':'Kentucky', '22':'Louisiana',
                   '23':'Maine', '24':'Maryland', '25':'Massachusetts', '26':'Michigan', '27':'Minnesota', '28':'Mississippi',
-                  '29':'Missouri', '30':'Montana', '54':'West Virginia'}
+                  '29':'Missouri', '30':'Montana', '31':'Nebraska', '33':'New Hampshire', '34':'New Jersey', '35':'New Mexico',
+                  '36':'New York', '37':'North Carolina', '38':'North Dakota', '39':'Ohio', '40':'Oklahoma', '41':'Oregon',
+                  '42':'Pennsylvania', '44':'Rhode Island', '45':'South Carolina', '46':'South Dakota', '47':'Tennessee',
+                  '48':'Texas', '49':'Utah', '50':'Vermont', '51':'Virginia', '53':'Washington', 
+                  '54':'West Virginia', '55':'Wisconsin', '56':'Wyoming' }
 
 ## Check for existence of --stateCodes and stateCodesDict
 codes = args.stateCodes
@@ -76,37 +80,51 @@ def simple_CSV_File_Processor(fname, choice):
 def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
     columns = defaultdict(list)
     firstExpect = []
+    firstFinExpect = []
     secondExpect = []
+    secondFinExpect = []
     thirdExpect = []
-    fourthExpect = []
+    thirdFinExpect = []
+    
     expectDataFrame = pd.DataFrame()
     with open(fname[0].name) as csvfile:
+        csvfile.seek(0)
         lineReader = csv.DictReader(csvfile, delimiter=',')
         for row in lineReader:
             for (k,v) in row.items():
                 if(row['STATE2KX'] == stateCodes[0]):
-                    #print(row)
                     columns[k].append(v)
         firstExpect = columns['e(0)']        
         firstFinExpect = [float(i) for i in firstExpect]
         columns = defaultdict(list)
-        csvfile.seek(0)
-        for row in lineReader:
-            for (k,v) in row.items():
-                if(row['STATE2KX'] == stateCodes[1]):
-                    columns[k].append(v)
-        secondExpect = columns['e(0)']        
-        secondFinExpect = [float(i) for i in secondExpect]
+        if(len(stateCodes) > 1):
+            csvfile.seek(0)
+            for row in lineReader:
+                for (k,v) in row.items():
+                    if(row['STATE2KX'] == stateCodes[1]):
+                        columns[k].append(v)
+            secondExpect = columns['e(0)']        
+            secondFinExpect = [float(i) for i in secondExpect]
         columns = defaultdict(list)
-        print(len(firstFinExpect))
-        print(len(secondFinExpect))
+        if(len(stateCodes) > 2):
+            csvfile.seek(0)
+            for row in lineReader:
+                for (k,v) in row.items():
+                    if(row['STATE2KX'] == stateCodes[2]):
+                        columns[k].append(v)
+            thirdExpect = columns['e(0)']
+            thirdFinExpect = [float(i) for i in thirdExpect]
+
+    print(len(firstFinExpect))
+    print(len(secondFinExpect))
+    print(len(thirdFinExpect))
+    
     if(len(secondFinExpect) > len(firstFinExpect)):
         extend_length = len(secondFinExpect) - len(firstFinExpect)
         pad = 0
         while(pad < extend_length):
             firstFinExpect.append(0)
             pad = pad + 1
-    expectDataFrame[stateCodesDict[stateCodes[0]]] = firstFinExpect
     
     if(len(secondFinExpect) < len(firstFinExpect)):
         extend_length = len(firstFinExpect) - len(secondFinExpect)
@@ -114,7 +132,24 @@ def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
         while(pad < extend_length):
             secondFinExpect.append(0)
             pad = pad + 1
+    
+    if(len(thirdFinExpect) > len(secondFinExpect)):
+        extend_length = len(thirdFinExpect) - len(secondFinExpect)
+        pad = 0
+        while(pad < extend_length):
+            firstFinExpect.append(0)
+            secondFinExpect.append(0)
+            pad = pad + 1
+    if(len(thirdFinExpect) < len(secondFinExpect)):
+        extend_length = len(secondFinExpect) - len(thirdFinExpect)
+        pad = 0
+        while(pad < extend_length):
+            thirdFinExpect.append(0)
+            pad = pad + 1
+    expectDataFrame[stateCodesDict[stateCodes[0]]] = firstFinExpect
     expectDataFrame[stateCodesDict[stateCodes[1]]] = secondFinExpect
+    expectDataFrame[stateCodesDict[stateCodes[2]]] = thirdFinExpect
+        
     return(expectDataFrame)
 
 
@@ -167,11 +202,6 @@ def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, mean, stdDev, fileStr, tit
     tmean = "{:.2f}".format(mean[0])
     fmean = "{:.2f}".format(mean[1])
     annotStr = "U.S. mean = " + tmean + " and Georgia mean = " + fmean
-    #fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
-    #readLength1 = readLengthDF[dfCols[0]]
-    #readLength2 = readLengthDF[dfCols[1]]
-    #filteredReadLength1 = readLength1[~np.isnan(readLength1)]
-    #filteredReadLength2 = readLength2[~np.isnan(readLength2)]
     medianprops = dict(linewidth=6, color='black')
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
@@ -191,10 +221,10 @@ def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, mean, stdDev, fileStr, tit
     axes1.set_title( titleStr + ' (2010-2015)', fontsize = BIG_SIZE)
     axes1.set(ylabel='Age in Years')
     axes1.set(xlabel=annotStr)
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_' + titleStr + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_1state_' + titleStr + '.png')
 
 
-## Function to plot read lengths of two life expectancy series
+## Function to plot read lengths of three life expectancy series
 def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdDev, fileStr, titleStr, stateCodes, stateCodesDict):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
@@ -209,11 +239,6 @@ def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdD
     fmean = "{:.2f}".format(mean[1])
     smean = "{:.2f}".format(mean[2])
     annotStr = "U.S. mean = " + tmean + ", " + stateCodesDict[stateCodes[0]]  + " mean = " + fmean + ", and " + stateCodesDict[stateCodes[1]] + " mean = " + smean
-    #fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
-    #readLength1 = readLengthDF[dfCols[0]]
-    #readLength2 = readLengthDF[dfCols[1]]
-    #filteredReadLength1 = readLength1[~np.isnan(readLength1)]
-    #filteredReadLength2 = readLength2[~np.isnan(readLength2)]
     medianprops = dict(linewidth=6, color='black')
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
@@ -234,16 +259,52 @@ def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdD
     axes1.set(ylabel='Age in Years')
     axes1.set(xlabel=annotStr)
     titleStrMod = re.sub(r',', '', titleStr)
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_' + titleStrMod + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_2state_' + titleStrMod + '.png')
 
+## Function to plot read lengths of three life expectancy series
+def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, stateLifeExp3, mean, stdDev, fileStr, titleStr, stateCodes, stateCodesDict):
+    SMALL_SIZE = 30
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 38
+    colors = ['#00FF00', '#006400', '#FFA500', '#FF0000']
+    fig1, axes1 = plt.subplots(figsize=(27,19))
+    axes1.xaxis.label.set_size(SMALL_SIZE)
+    axes1.yaxis.label.set_size(MEDIUM_SIZE)
+    axes1.tick_params(axis='x', labelsize=MEDIUM_SIZE)
+    axes1.tick_params(axis='y', labelsize=MEDIUM_SIZE)
+    omean = "{:.2f}".format(mean[0])
+    fmean = "{:.2f}".format(mean[1])
+    smean = "{:.2f}".format(mean[2])
+    tmean = "{:.2f}".format(mean[3])
+    annotStr = "U.S. mean = " + omean + ", " + stateCodesDict[stateCodes[0]]  + " mean = " + fmean + ", " + stateCodesDict[stateCodes[1]] + " mean = " + smean + ", and " + stateCodesDict[stateCodes[2]] + " mean = " + tmean
+    medianprops = dict(linewidth=6, color='black')
+    whiskerprops = dict(linewidth=5, color='black')
+    capprops = dict(linewidth=5, color='black')
+    x_labels = ['U.S.', stateCodesDict[stateCodes[0]], stateCodesDict[stateCodes[1]], stateCodesDict[stateCodes[2]] ]
+    vp = axes1.violinplot([allLifeExp, stateLifeExp1, stateLifeExp2, stateLifeExp3], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
+    xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
+    xy = np.array(xy)
+    axes1.scatter(xy[:,0], xy[:,1],s=121, c="#A020F0", marker="D", zorder=3)
+    for pc, color in zip(vp['bodies'], colors):
+        pc.set_facecolor(color)
+        pc.set_edgecolor('black')
+        pc.set_alpha(0.6)
+    vp['cmeans'].set_visible(False)
+    vp['cmedians'].set_colors('black')
+    vp['cmedians'].set_linewidth(3)
+    axes1.set_title(titleStr + ' (2010-2015)', fontsize = BIG_SIZE)
+    axes1.set(ylabel='Age in Years')
+    axes1.set(xlabel=annotStr)
+    titleStrMod = re.sub(r',', '', titleStr)
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_3state_' + titleStrMod + '.png')
 
-    
 
 allLifeExpectancy = simple_CSV_File_Processor(args.filename, args.outputType)
 
 statesLifeExpect = state_CSV_File_Processor(args.filename, codes, stateCodesDict)
 
-print(statesLifeExpect.tail())
+#print(statesLifeExpect.tail())
 
 mean = []
 stdDev = []
@@ -255,14 +316,20 @@ temp3Series = []
 mean.append(statistics.mean(allLifeExpectancy))
 temp1Series = statesLifeExpect[stateCodesDict[codes[0]]]
 mean.append(statistics.mean(temp1Series[temp1Series!=0]))
-temp2Series = statesLifeExpect[stateCodesDict[codes[1]]]
-mean.append(statistics.mean(temp2Series[temp2Series!=0]))
+if(len(codes) > 1):
+    temp2Series = statesLifeExpect[stateCodesDict[codes[1]]]
+    mean.append(statistics.mean(temp2Series[temp2Series!=0]))
+if(len(codes) > 2):
+    temp3Series = statesLifeExpect[stateCodesDict[codes[2]]]
+    mean.append(statistics.mean(temp3Series[temp3Series!=0]))
 
 ## compute standard deviation
 stdDev.append(statistics.stdev(allLifeExpectancy))
 stdDev.append(statistics.stdev(temp1Series[temp1Series!=0]))
-stdDev.append(statistics.stdev(temp2Series[temp2Series!=0]))
-
+if(len(codes) > 1):
+    stdDev.append(statistics.stdev(temp2Series[temp2Series!=0]))
+if(len(codes) > 2):
+    stdDev.append(statistics.stdev(temp3Series[temp3Series!=0]))
 
 if(args.outputType == 'S'):  ## User selection by --outputType
     if(len(codes) == 0):
@@ -274,6 +341,11 @@ if(args.outputType == 'S'):  ## User selection by --outputType
         print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (getIsolateStr(args.filename[0].name), mean[0], stdDev[0]))
         print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (list(statesLifeExpect)[0], mean[1], stdDev[1]))
         print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (list(statesLifeExpect)[1], mean[2], stdDev[2]))
+    elif(len(codes) == 3):
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (getIsolateStr(args.filename[0].name), mean[0], stdDev[0]))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (stateCodesDict[codes[0]], mean[1], stdDev[1]))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (stateCodesDict[codes[1]], mean[2], stdDev[2]))
+        print("Mean life expectancy from %s is %0.2f and standard deviation is %0.2f" % (stateCodesDict[codes[2]], mean[3], stdDev[3]))
 else:
     if(len(codes) == 0):
         plotSingleViolinLifeExp(allLifeExpectancy, mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
@@ -281,3 +353,5 @@ else:
         plotDoubleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
     elif(len(codes) == 2):
         plotTripleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], temp2Series[temp2Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString, codes, stateCodesDict)
+    elif(len(codes) == 3):
+        plotQuadrupleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], temp2Series[temp2Series!=0], temp3Series[temp3Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString, codes, stateCodesDict)
