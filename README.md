@@ -6,6 +6,8 @@ A showcase of functions using Biopython, FastqGeneralIterator, pandas, and matpl
 #### 1. Getting started after GIT download
 `cd DataViz_For_Fastq`
 
+`gunzip Life_Expectancy_US/US_A_USALEEP.csv.gz`
+
 #### 2. Install Python 3.9.X or higher
 Alternatively, in a multi-user environment, load Python module:
 
