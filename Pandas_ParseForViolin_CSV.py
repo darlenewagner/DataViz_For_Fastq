@@ -116,39 +116,42 @@ def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
             thirdFinExpect = [float(i) for i in thirdExpect]
 
     print(len(firstFinExpect))
-    print(len(secondFinExpect))
-    print(len(thirdFinExpect))
     
-    if(len(secondFinExpect) > len(firstFinExpect)):
-        extend_length = len(secondFinExpect) - len(firstFinExpect)
-        pad = 0
-        while(pad < extend_length):
-            firstFinExpect.append(0)
-            pad = pad + 1
-    
-    if(len(secondFinExpect) < len(firstFinExpect)):
-        extend_length = len(firstFinExpect) - len(secondFinExpect)
-        pad = 0
-        while(pad < extend_length):
-            secondFinExpect.append(0)
-            pad = pad + 1
-    
-    if(len(thirdFinExpect) > len(secondFinExpect)):
-        extend_length = len(thirdFinExpect) - len(secondFinExpect)
-        pad = 0
-        while(pad < extend_length):
-            firstFinExpect.append(0)
-            secondFinExpect.append(0)
-            pad = pad + 1
-    if(len(thirdFinExpect) < len(secondFinExpect)):
-        extend_length = len(secondFinExpect) - len(thirdFinExpect)
-        pad = 0
-        while(pad < extend_length):
-            thirdFinExpect.append(0)
-            pad = pad + 1
+    if(len(stateCodes) > 1):
+        print(len(secondFinExpect))
+        if(len(secondFinExpect) > len(firstFinExpect)):
+            extend_length = len(secondFinExpect) - len(firstFinExpect)
+            pad = 0
+            while(pad < extend_length):
+                firstFinExpect.append(0)
+                pad = pad + 1
+        if(len(secondFinExpect) < len(firstFinExpect)):
+            extend_length = len(firstFinExpect) - len(secondFinExpect)
+            pad = 0
+            while(pad < extend_length):
+                secondFinExpect.append(0)
+                pad = pad + 1
+    if(len(stateCodes) > 2):
+        print(len(thirdFinExpect))
+        if(len(thirdFinExpect) > len(secondFinExpect)):
+            extend_length = len(thirdFinExpect) - len(secondFinExpect)
+            pad = 0
+            while(pad < extend_length):
+                firstFinExpect.append(0)
+                secondFinExpect.append(0)
+                pad = pad + 1
+        if(len(thirdFinExpect) < len(secondFinExpect)):
+            extend_length = len(secondFinExpect) - len(thirdFinExpect)
+            pad = 0
+            while(pad < extend_length):
+                thirdFinExpect.append(0)
+                pad = pad + 1
+                
     expectDataFrame[stateCodesDict[stateCodes[0]]] = firstFinExpect
-    expectDataFrame[stateCodesDict[stateCodes[1]]] = secondFinExpect
-    expectDataFrame[stateCodesDict[stateCodes[2]]] = thirdFinExpect
+    if(len(stateCodes) > 1):
+        expectDataFrame[stateCodesDict[stateCodes[1]]] = secondFinExpect
+    if(len(stateCodes) > 2):
+        expectDataFrame[stateCodesDict[stateCodes[2]]] = thirdFinExpect
         
     return(expectDataFrame)
 
@@ -201,7 +204,7 @@ def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, mean, stdDev, fileStr, tit
     axes1.tick_params(axis='y', labelsize=MEDIUM_SIZE)
     tmean = "{:.2f}".format(mean[0])
     fmean = "{:.2f}".format(mean[1])
-    annotStr = "U.S. mean = " + tmean + " and Georgia mean = " + fmean
+    annotStr = "U.S. mean = " + tmean + " and " + stateCodesDict[stateCodes[0]]  + " mean = " + fmean 
     medianprops = dict(linewidth=6, color='black')
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
@@ -229,7 +232,7 @@ def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdD
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
-    colors = ['#00FF00', '#FFFF00', '#FFA500', '#FF0000']
+    colors = ['#00FF00', '#006400', '#FFFF00', '#FFA500']
     fig1, axes1 = plt.subplots(figsize=(26,19))
     axes1.xaxis.label.set_size(SMALL_SIZE)
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
@@ -350,7 +353,7 @@ else:
     if(len(codes) == 0):
         plotSingleViolinLifeExp(allLifeExpectancy, mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
     elif(len(codes) == 1):
-        plotDoubleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
+        plotDoubleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString, codes, stateCodesDict)
     elif(len(codes) == 2):
         plotTripleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], temp2Series[temp2Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString, codes, stateCodesDict)
     elif(len(codes) == 3):
