@@ -27,3 +27,6 @@ Exact path to bin/python may differ according to Python version.
 
 #### 1. Plotting NGS reads lengths from four .fastq files
 `bin/python BioPython_LengthViolinFastq_Reads.py Viral_MiSeq/SC2_X.R1.fastq Viral_MiSeq/SC2_X.R2.fastq Viral_iSeq/SC2_Y.R1.fastq Viral_iSeq/SC2_Y.R2.fastq --outputType P`
+
+#### 2. Plotting Census Tract Life Expectancies for States from USALEEP Dataset
+`bin/python Pandas_ParseForViolin_CSV.py US_A_USALEEP.csv --outputType P --stateCodes 6 56 --titleString "U.S., California, and Wyoming Life Expectancy,"`
