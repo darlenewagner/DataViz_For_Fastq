@@ -73,8 +73,8 @@ def plotSingleViolinLifeExp(lifeExp):
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
     colors = ['#00FF00']
-    fig = go.Figure(data=go.Violin(y=lifeExp, box_visible=True, line_color='black', meanline_visible=True, fillcolor='darkseagreen'))
-    fig.update_layout(title="U.S. Life Expectancy (2010-2015)", xaxis_title="Jurisdiction", yaxis_title="Age in Years")
+    fig = go.Figure(data=go.Violin(y=lifeExp['USA'], name='USA', box_visible=True, line_color='black', meanline_visible=True, fillcolor='darkseagreen'))
+    fig.update_layout(title="U.S. Life Expectancy (2010-2015)", xaxis_title="Census Tracts", yaxis_title="Age in Years")
     plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyViolin.html")
 
 
