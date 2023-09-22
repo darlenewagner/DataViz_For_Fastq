@@ -25,6 +25,10 @@ Exact path to bin/python may differ according to Python version.
 
 `bin/pip install pandas`
 
+`bin/pip install mpld3`
+
+`bin/pip install plotly`
+
 ## USAGE EXAMPLES
 
 #### 1. Plotting NGS reads lengths from four .fastq files
