@@ -36,3 +36,8 @@ Exact path to bin/python may differ according to Python version.
 
 #### 2. Plotting Census Tract Life Expectancies for States from USALEEP Dataset
 `bin/python Pandas_ParseForViolin_CSV.py US_A_USALEEP.csv --outputType P --stateCodes 6 56 --titleString "U.S., California, and Wyoming Life Expectancy,"`
+
+#### 3. Interactive Plots of Life Expectancies for States from USALEEP Dataset
+`bin/python Plotly_ParseForViolin_to_HTML.py Life_Expectancy_US/US_A_USALEEP.csv --stateCodes 15 6 30 --titleString "U.S., Hawaii, California, and Montana"`
+
+Note: For Plotly_ParseForViolin_to_HTML.py, output path is set to a folder that enables point-and-click opening of the output HTML.
