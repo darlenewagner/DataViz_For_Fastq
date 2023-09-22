@@ -126,10 +126,10 @@ def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
                         columns[k].append(v)
             thirdExpect = columns['e(0)']
             thirdFinExpect = [float(i) for i in thirdExpect]
-    print(len(firstFinExpect))
+    #print(len(firstFinExpect))
     
     if(len(stateCodes) > 1):
-        print(len(secondFinExpect))
+        #print(len(secondFinExpect))
         if(len(secondFinExpect) > len(firstFinExpect)):
             extend_length = len(secondFinExpect) - len(firstFinExpect)
             pad = 0
@@ -143,7 +143,7 @@ def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
                 secondFinExpect.append(0)
                 pad = pad + 1
     if(len(stateCodes) > 2):
-        print(len(thirdFinExpect))
+        #print(len(thirdFinExpect))
         if(len(thirdFinExpect) > len(secondFinExpect)):
             extend_length = len(thirdFinExpect) - len(secondFinExpect)
             pad = 0
@@ -167,17 +167,16 @@ def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
     return(expectDataFrame)
 
 
-## plot a single violin plot of life expectancy annotated with mean and standard deviation
+## plot a single violin plot of life expectancy with interactive annotation
 def plotSingleViolinLifeExp(lifeExp, titleStr):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
-    colors = ['#00FF00']
     fig = go.Figure(data=go.Violin(y=lifeExp['USA'], name='USA', box_visible=True, line_color='black', meanline_visible=True, fillcolor='darkseagreen'))
     fig.update_layout(title="U.S. Life Expectancy (2010-2015)", xaxis_title="Census Tracts", yaxis_title="Age in Years")
     plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyViolin_" + titleStr + ".html")
 
-
+## plot two violin plots of life expectancies, U.S. plus 1 state, with interactive annotation
 def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, titleStr, codes, stateCodesDict):
     bothDF = pd.concat([allLifeExp, stateLifeExp])
     SMALL_SIZE = 32
@@ -191,19 +190,58 @@ def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, titleStr, codes, stateCode
         ii = ii + 1
     fig.update_layout(title="U.S. and Georgia Life Expectancy (2010-2015)", xaxis_title="Census Tract Groupings", yaxis_title="Age in Years")
     plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyViolin_1state_" + titleStr + ".html")
+
+## plot three violin plots of life expectancies, U.S. plus 2 states, with interactive annotation
+def plotTripleViolinLifeExp(allLifeExp, stateLifeExp, titleStr, codes, stateCodesDict):
+    bothDF = pd.concat([allLifeExp, stateLifeExp])
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
+    fig = go.Figure()
+    colors = ['darkseagreen', 'yellow', 'orange']
+    ii = 0
+    for item in list(bothDF):
+        tempSeries = bothDF[item].squeeze()
+        fig = fig.add_trace(go.Violin(y=tempSeries[tempSeries>0.0], name=item, box_visible=True, line_color='black', meanline_visible=True, fillcolor=colors[ii]))
+        ii = ii + 1
+    fig.update_layout(title="%s Life Expectancy (2010-2015)" % (titleStr), xaxis_title="Census Tract Groupings", yaxis_title="Age in Years")
+    plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyViolin_2state_" + titleStr + ".html")
     
+
+## plot four violin plots of life expectancies, U.S. plus 3 states, with interactive annotation
+def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp, titleStr, codes, stateCodesDict):
+    bothDF = pd.concat([allLifeExp, stateLifeExp])
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
+    fig = go.Figure()
+    colors = ['darkseagreen', 'green', 'yellow', 'orange']
+    ii = 0
+    for item in list(bothDF):
+        tempSeries = bothDF[item].squeeze()
+        fig = fig.add_trace(go.Violin(y=tempSeries[tempSeries>0.0], name=item, box_visible=True, line_color='black', meanline_visible=True, fillcolor=colors[ii]))
+        ii = ii + 1
+    fig.update_layout(title="%s Life Expectancy (2010-2015)" % (titleStr), xaxis_title="Census Tract Groupings", yaxis_title="Age in Years")
+    plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyViolin_2state_" + titleStr + ".html")
+
+
 allLifeExpectancy = simple_CSV_File_Processor(args.filename)
 
 statesLifeExpect = state_CSV_File_Processor(args.filename, codes, stateCodesDict)
+
+#print(statesLifeExpect.tail())
 
 ## Decision statements for number of state codes supplied by user
 if(len(codes) == 0):
     plotSingleViolinLifeExp(allLifeExpectancy, args.titleString)
 elif(len(codes) == 1):
     plotDoubleViolinLifeExp(allLifeExpectancy, statesLifeExpect, args.titleString, codes, stateCodesDict)
-    
+elif(len(codes) == 2):
+    plotTripleViolinLifeExp(allLifeExpectancy, statesLifeExpect, args.titleString, codes, stateCodesDict)
+elif(len(codes) == 3):
+    plotQuadrupleViolinLifeExp(allLifeExpectancy, statesLifeExpect, args.titleString, codes, stateCodesDict)
+else:
+    print("EXCEPTION: Current version of Plotly_ParseForViolin_to_HTML.py not able to show more than 4 violin plots.\nPlease select one to three numbers between 1 and 56.\n.\n.\n.")
+    sys.exit()
 
-
-#fig = px.line(x=[1,2,3,4], y=[1,2,3,5])
-#plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyLine.html")
 
