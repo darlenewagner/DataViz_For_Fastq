@@ -11,6 +11,7 @@ from Bio.SeqIO.QualityIO import FastqGeneralIterator
 
 ## import numpy
 import numpy as np
+import seaborn as sns
 
 ## import matplotlib
 from matplotlib import pyplot as plt
@@ -19,9 +20,9 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 ## Function to validate type of input file: '.fastq'
-def ext_check(expected_ext, openner):
+def ext_check(expected_ext1, expected_ext2, expected_ext3, openner):
         def extension(filename):
-                if not filename.lower().endswith(expected_ext):
+                if not (filename.lower().endswith(expected_ext1) or filename.lower().endswith(expected_ext2)):
                         raise ValueError()
                 return openner(filename)
         return extension
@@ -34,10 +35,10 @@ def getIsolateStr(filePathString):
 	return fileString
 
 ## Initialize argparse object as 'parser'
-parser = argparse.ArgumentParser(description='Show read count and base pair count of one or two filename.fastq files', usage='BioPython_Parsing_FASTQ.py filepath/filename1.fastq filepath/filename2.fastq (optional)')
+parser = argparse.ArgumentParser(description='Show read count and base pair count of one to six filename.fastq files (alternate: Insert length .tsv files)', usage='BioPython_Parsing_FASTQ.py filepath/filename1.fastq filepath/filename2.fastq (optional)')
 
 ## Add attribute 'filename' (the .fastq input file) to object 'parser'
-parser.add_argument('filename', nargs='+', type=ext_check('.fastq', argparse.FileType('r')))
+parser.add_argument('filename', nargs='+', type=ext_check('.fastq', '.tsv', '.csv', argparse.FileType('r')))
 
 ## Add attribute '--outputType' to object 'parser'
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], help="--outputType S for simple statistics, --outputType L for list of all read lengths, and --outputType P for matplotlib plots")
@@ -45,7 +46,7 @@ parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], 
 args = parser.parse_args()
 
 ## Function to extract Fastq read length (other version extracts PHRED Quality)
-def extractData(fnames):
+def extractFastqData(fnames):
     simpFileName = []
     ii = 0
     readLengthDF = pd.DataFrame()
@@ -66,6 +67,9 @@ def extractData(fnames):
         readLengthDF[fnamesl1[0]] = readLenDF
         ii = ii + 1
     return(readLengthDF)
+
+#def extractInsertLengths()
+
 
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadLengths(readLengths, fileStr):
@@ -120,8 +124,9 @@ def plotDoubleReadLenths(readLengthDF):
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
     x_labels = [dfCols[0], dfCols[len(dfCols) -1]]
-    vp = axes1.violinplot([filteredReadLength1, filteredReadLength2], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    vp = axes1.violinplot([filteredReadLength1[filteredReadLength1 < 400], filteredReadLength2[filteredReadLength2 < 400]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
+    #axes1.set_ylim(ymax=500)
     xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
     xy = np.array(xy)
     axes1.scatter(xy[:,0], xy[:,1],s=121, c="#A020F0", marker="D", zorder=3)
@@ -133,7 +138,7 @@ def plotDoubleReadLenths(readLengthDF):
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
-    axes1.set(ylabel='Read Lengths (bp)')
+    axes1.set(ylabel='Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
     fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_' + fileTitle + '.png')
 
@@ -143,7 +148,6 @@ def plotMultiReadLengths(readLengthDF):
     MEDIUM_SIZE = 36
     BIG_SIZE = 38
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#00FFFF', '#FF00FF']
-
     fig1, axes1 = plt.subplots(figsize=(27,19))
     fig1.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.22)
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
@@ -184,10 +188,9 @@ def plotMultiReadLengths(readLengthDF):
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
-    axes1.set(ylabel='Read Lengths (bp)')
+    axes1.set(ylabel='Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
     fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/multiViolinLength_' + fileTitle + '.png')
-
     
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
@@ -212,12 +215,12 @@ def lengthOfFastqReads(fnames, choice):
 ## for exactly two files, invoke plotDoubleReadLengths
     elif(len(fnames) == 2):
         readLengthDF = pd.DataFrame()
-        ## Call function 'extractData' to read multiple .fastq files
-        readLengthDF = extractData(fnames)
+        ## Call function 'extractFastqData' to read multiple .fastq files
+        readLengthDF = extractFastqData(fnames)
         
         if(choice == 'S'):
-            print("%s average read length is %i base pairs" % (fnamesl1[0], readLengthDF[fnamesl1[0]].mean() ))
-            print("%s average read length is %i base pairs" % (fnamesl2[0], readLengthDF[fnamesl2[0]].mean() ))
+            print("%s average read length is %i base pairs" % ( getIsolateStr(fnames[0].name), readLengthDF[fnames[0]].mean() ))
+            print("%s average read length is %i base pairs" % ( getIsolateStr(fnames[1].name), readLengthDF[fnames[1]].mean() ))
         elif(choice == 'L'):
             #print("%s\t%s" % (fnamesl1[0], fnamesl2[0]))
             #for index, row in readLengthDF.iterrows():
@@ -239,8 +242,8 @@ def lengthOfFastqReads(fnames, choice):
         readLenDF = pd.Series(dtype=int)
         readLenDF2 = pd.Series(dtype=int)
         readLengthDF = pd.DataFrame()
-        ## Call function 'extractData' to read multiple .fastq files
-        readLengthDF = extractData(fnames)
+        ## Call function 'extractFastqData' to read multiple .fastq files
+        readLengthDF = extractFastqData(fnames)
         if(choice == 'S'):
             dfCols = list(readLengthDF)
             for cols in dfCols:
@@ -256,18 +259,100 @@ def lengthOfFastqReads(fnames, choice):
                     print(str(row[cell]) + "\t", end="")
                 print()
         else:
-        ## Call function to plot more than two boxplots
+        ## Call function to plot more than two violin plots
             plotMultiReadLengths(readLengthDF)
+
+def getInsertLengths(fnames, choice):
+    insertCount = 0
+    insertLengths = []
+    insertLengths2 = []
+    insertLengthDF = pd.DataFrame()
+    f = 0
+    if(len(fnames) < 2):
+        with open(fnames[0].name, 'r') as tsv:
+            for line in csv.reader(tsv, delimiter="\t"):
+                if(insertCount > 0):
+                    insertLengths.append(int(line[1]))
+                insertCount = insertCount + 1
+
+        #fnames[0].close()
+        if(choice == 'S'):
+            print("%s average insert length is %i base pairs" % (getIsolateStr(fnames[f].name), statistics.mean(insertLengths)))
+        elif(choice == 'L'):
+            print("%s" % getIsolateStr(fnames[f].name))
+            [print(item) for item in insertLengths]
+        else:
+            plotSingleReadLengths(insertLengths, getIsolateStr(fnames[f].name))
+## for exactly two files, invoke plotDoubleReadLengths
+    elif(len(fnames) == 2):
+        with open(fnames[0].name, 'r') as tsv1:
+            for line in csv.reader(tsv1, delimiter="\t"):
+                if(insertCount > 0):
+                    insertLengths.append(int(line[1]))
+                insertCount = insertCount + 1
+        insertCount = 0
+        with open(fnames[1].name, 'r') as tsv2:
+            for line in csv.reader(tsv2, delimiter="\t"):
+                if(insertCount > 0):
+                    insertLengths2.append(int(line[1]))
+                insertCount = insertCount + 1
+        ## Call function 'extractFastqData' to read multiple .fastq files
+        #insertLengthDF = extractFastqData(fnames)
+        insertLengthTemp = pd.DataFrame(insertLengths, columns=[getIsolateStr(fnames[0].name)])
+        insertLengthTemp2 = pd.DataFrame(insertLengths2, columns=[getIsolateStr(fnames[1].name)])
+        insertLengthDF = pd.concat([insertLengthTemp, insertLengthTemp2], axis=1)
+        
+        if(choice == 'S'):
+            #print(insertLengthDF.tail())
+            for cols in list(insertLengthDF):
+                print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
+                #print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
+        elif(choice == 'L'):
+            #print("%s\t%s" % (fnamesl1[0], fnamesl2[0]))
+            #for index, row in readLengthDF.iterrows():
+            #    print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
+            dfCols = list(insertLengthDF)
+            for header in dfCols:
+                print("%s\t" % (header), end="")
+            print()
+            ii = 0
+            for index, row in insertLengthDF.iterrows():
+                for cell in dfCols:
+                    print(str(row[cell]) + "\t", end="")
+                print()
+        else:
+        ## Call funtion to plot two violin plots
+            plotDoubleReadLenths(insertLengthDF)
             
-                
+    elif((len(fnames) > 2) and (len(fnames) < 7)):
+        tempInsertSeries = pd.Series()
+        fileIdx = 0
+        while(fileIdx < len(fnames)):
+            with open(fnames[fileIdx].name, 'r') as tsv0:
+                for line in csv.reader(tsv0, delimiter="\t"):
+                    if(insertCount > 0):
+                        insertLengths.append(int(line[1]))
+                    insertCount = insertCount + 1
+                insertCount = 0
+            if(fileIdx == 0):
+                insertLengthDF[fnames[fileIdx].name] = insertLengths
+            else:
+                insertLengthTemp = pd.DataFrame(insertLengths, columns=[getIsolateStr(fnames[fileIdx].name)])
+                insertLengthDF = pd.concat([insertLengthDF, insertLengthTemp], axis=1)
+            fileIdx = fileIdx + 1
+
+        
 ## Exit on error if input files exceeds 6
 if(len(args.filename) > 6):
     sys.exit("BioPython_LengthMultiFastq_Reads.py accepts no more than six .fastq files as input.")
 
-## Invoke function that counts NGS reads for each file in command-line arguments
+fileStr = getIsolateStr(args.filename[0].name)
 
-lengthOfFastqReads(args.filename, args.outputType)
-
-
+if(fileStr.endswith('.fastq')):
+    ## Invoke function that plots NGS reads for each file in command-line arguments
+    lengthOfFastqReads(args.filename, args.outputType)
+elif(fileStr.endswith('.tsv') or fileStr.endswith('.csv')):
+    ## Invoke function that plots NGS read insert lengths for each file in command-line arguments
+    getInsertLengths(args.filename, args.outputType)
 
 
