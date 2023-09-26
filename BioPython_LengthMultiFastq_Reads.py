@@ -1,6 +1,6 @@
 #!/usr/bin/python
 ## import base Python packages for OS, RegExs, .csv files, statistics, etc.
-import os, sys, re, csv, statistics
+import os, sys, re, csv, statistics, math
 import argparse, logging, warnings, glob
 
 ## import BioPython and related packages
@@ -46,9 +46,9 @@ args = parser.parse_args()
 
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadLengths(readLengths, fileStr):
-    SMALL_SIZE = 28
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 30
+    MEDIUM_SIZE = 34
+    BIG_SIZE = 38
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
     fig1, axes1 = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(15,19))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
@@ -58,26 +58,27 @@ def plotSingleReadLengths(readLengths, fileStr):
     medianprops = dict(linewidth=6, color='black')
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
-    x_labels = [dfCols[0], dfCols[len(dfCols) -1]]
+    x_labels = fileStr
     bp = axes1.boxplot(readLengths, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops)
     for patch, color in zip(bp['boxes'], colors):
         patch.set_facecolor(color)
     axes1.set_title(fileStr, fontsize = BIG_SIZE)
-    axes1.set(ylabel='Read Counts')
-    axes1.set(xlabel='Read Lengths')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/boxLength' + fileStr + '.png')   
+    axes1.set(ylabel='Read Lengths (bp)')
+    axes1.set(xlabel='Fastq Files')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/boxLength' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
 def plotDoubleReadLenths(readLengthDF):
-    SMALL_SIZE = 28
-    MEDIUM_SIZE = 32
-    BIG_SIZE = 36
+    SMALL_SIZE = 30
+    MEDIUM_SIZE = 34
+    BIG_SIZE = 38
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
     fig1, axes1 = plt.subplots(figsize=(25,19))
     axes1.xaxis.label.set_size(MEDIUM_SIZE)
     axes1.yaxis.label.set_size(MEDIUM_SIZE)
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
     axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
+    axes1.margins(0.1)
     dfCols = list(readLengthDF)
     fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
     readLength1 = readLengthDF[dfCols[0]]
@@ -94,7 +95,52 @@ def plotDoubleReadLenths(readLengthDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/nextflow_2023_for_read_mapping/SARS-CoV-2_MiSeq_VPipe_processed/boxLen_' + fileTitle + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/boxLen_' + fileTitle + '.png')
+
+
+def plotMultiReadLengths(readLengthDF):
+    SMALL_SIZE = 28
+    MEDIUM_SIZE = 34
+    BIG_SIZE = 38
+    colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#00FFFF', '#FF00FF']
+
+    fig1, axes1 = plt.subplots(figsize=(27,19))
+    fig1.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.2)
+    axes1.xaxis.label.set_size(MEDIUM_SIZE)
+    axes1.yaxis.label.set_size(MEDIUM_SIZE)
+    axes1.tick_params(axis='x', labelsize=SMALL_SIZE, labelrotation=25)
+    axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
+    axes1.margins(0.1)
+    dfCols = list(readLengthDF)
+    fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
+    filteredReadLength = {}
+    readLength = []
+    for col in dfCols:
+        readLength = readLengthDF[col]
+        filteredReadLength[col] = readLength[~np.isnan(readLength)]
+    medianprops = dict(linewidth=6, color='black')
+    whiskerprops = dict(linewidth=5, color='black')
+    capprops = dict(linewidth=5, color='black')
+    meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='#A020F0', markersize=16)
+    x_labels = list(readLengthDF)
+    readLengthMatrix = readLengthDF.to_numpy()
+    if(len(x_labels) == 3):
+        bp = axes1.boxplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]]], labels=x_labels, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops, showmeans=True, meanprops=meanpointprops)
+    elif(len(x_labels) == 4):
+        #axes1.set_xticklabels(axes1.get_xticks(), rotation=45)
+        bp = axes1.boxplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]]], labels=x_labels, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops, showmeans=True, meanprops=meanpointprops)
+    elif(len(x_labels) == 5):
+        bp = axes1.boxplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]], filteredReadLength[x_labels[4]]], labels=x_labels, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops, showmeans=True, meanprops=meanpointprops)
+    elif(len(x_labels) == 6):
+        bp = axes1.boxplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]], filteredReadLength[x_labels[4]], filteredReadLength[x_labels[5]]], labels=x_labels, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops, showmeans=True, meanprops=meanpointprops)
+    for patch, color in zip(bp['boxes'], colors):
+        patch.set_facecolor(color)
+    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    axes1.set(ylabel='Read Lengths (bp)')
+    axes1.set(xlabel='Fastq Files')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/multiBoxLen_' + fileTitle + '.png')
+
+    
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
 def lengthOfFastqReads(fnames, choice):
@@ -115,7 +161,7 @@ def lengthOfFastqReads(fnames, choice):
             [print(item) for item in readLengths]
         else:
             plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name))
-## for exactly two files, invoke plotMultiReadLengths
+## for exactly two files, invoke plotDoubleReadLengths
     elif(len(fnames) == 2):
         with open(fnames[0].name, 'r') as fastq:
             for header, sequence, quality in FastqGeneralIterator(fastq):
@@ -155,8 +201,10 @@ def lengthOfFastqReads(fnames, choice):
             for index, row in readLengthDF.iterrows():
                 print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
         else:
+        ## Call funtion to plot two boxplots
             plotDoubleReadLenths(readLengthDF)
-    elif((len(fnames) == 3) or (len(fnames) == 4)):
+## for three or four files, invoke plotDoubleReadLengths
+    elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
         readLenDF = pd.Series(dtype=int)
         readLenDF2 = pd.Series(dtype=int)
@@ -182,10 +230,24 @@ def lengthOfFastqReads(fnames, choice):
             dfCols = list(readLengthDF)
             for cols in dfCols:
                 print("%s average read length is %i base pairs" % (cols, readLengthDF[cols].mean() ))
-
-## Exit on error if input files exceeds 2
-if(len(args.filename) > 4):
-    sys.exit("BioPython_LengthMultiFastq_Reads.py accepts only one or two .fastq files as input.")
+        elif(choice == 'L'):
+            dfCols = list(readLengthDF)
+            for header in dfCols:
+                print("%s\t" % (header), end="")
+            print()
+            ii = 0
+            for index, row in readLengthDF.iterrows():
+                for cell in dfCols:
+                    print(str(row[cell]) + "\t", end="")
+                print()
+        else:
+        ## Call function to plot more than two boxplots
+            plotMultiReadLengths(readLengthDF)
+            
+                
+## Exit on error if input files exceeds 6
+if(len(args.filename) > 6):
+    sys.exit("BioPython_LengthMultiFastq_Reads.py accepts no more than six .fastq files as input.")
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
