@@ -66,7 +66,7 @@ def plotSingleHistOfExp(readLengths, mean, stdDev, fileStr):
     axes1.set_title('U.S. ' + fileStr + ' (2010-2015)', fontsize = BIG_SIZE)
     axes1.set(ylabel='Census Tract Counts')
     axes1.set(xlabel='Age in Years')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/lifeExpHist_' + fileStr + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/lifeExpHist_' + fileStr + '.png')
 
 
 lifeExpectancy = CSV_File_Processor(args.filename, args.outputType)
