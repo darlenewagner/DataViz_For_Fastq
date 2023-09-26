@@ -11,7 +11,7 @@ from Bio.SeqIO.QualityIO import FastqGeneralIterator
 
 ## import numpy
 import numpy as np
-import seaborn as sns
+#import seaborn as sns
 
 ## import matplotlib
 from matplotlib import pyplot as plt
@@ -101,7 +101,7 @@ def plotSingleReadLengths(readLengths, fileStr):
     axes1.set_title(fileStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLength_' + fileStr + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLength_' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
 def plotDoubleReadLenths(readLengthDF):
@@ -140,7 +140,7 @@ def plotDoubleReadLenths(readLengthDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLen_' + fileTitle + '.png')
 
 
 def plotMultiReadLengths(readLengthDF):
@@ -190,7 +190,7 @@ def plotMultiReadLengths(readLengthDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/multiViolinLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/multiViolinLen_' + fileTitle + '.png')
     
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
