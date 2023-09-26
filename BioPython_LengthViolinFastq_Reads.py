@@ -169,7 +169,7 @@ def plotMultiReadLengths(readLengthDF):
     x_labels = list(readLengthDF)
     #readLengthMatrix = readLengthDF.to_numpy()
     if(len(x_labels) == 3):
-        vp = axes1.violinplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+        vp = axes1.violinplot(filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     elif(len(x_labels) == 4):
         vp = axes1.violinplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]]], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     elif(len(x_labels) == 5):
@@ -190,7 +190,7 @@ def plotMultiReadLengths(readLengthDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/multiViolinLength_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/multiViolinLen_' + fileTitle + '.png')
     
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
@@ -308,9 +308,6 @@ def getInsertLengths(fnames, choice):
                 print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
                 #print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
         elif(choice == 'L'):
-            #print("%s\t%s" % (fnamesl1[0], fnamesl2[0]))
-            #for index, row in readLengthDF.iterrows():
-            #    print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
             dfCols = list(insertLengthDF)
             for header in dfCols:
                 print("%s\t" % (header), end="")
@@ -334,13 +331,29 @@ def getInsertLengths(fnames, choice):
                         insertLengths.append(int(line[1]))
                     insertCount = insertCount + 1
                 insertCount = 0
+            insertLength = [i for i in insertLengths if i < 400]
             if(fileIdx == 0):
-                insertLengthDF[fnames[fileIdx].name] = insertLengths
+                insertLengthDF[getIsolateStr(fnames[fileIdx].name)] = insertLength
             else:
-                insertLengthTemp = pd.DataFrame(insertLengths, columns=[getIsolateStr(fnames[fileIdx].name)])
+                insertLengthTemp = pd.DataFrame(insertLength, columns=[getIsolateStr(fnames[fileIdx].name)])
                 insertLengthDF = pd.concat([insertLengthDF, insertLengthTemp], axis=1)
             fileIdx = fileIdx + 1
-
+        if(choice == 'S'):
+            for cols in list(insertLengthDF):
+                print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
+        elif(choice == 'L'):
+            dfCols = list(insertLengthDF)
+            for header in dfCols:
+                print("%s\t" % (header), end="")
+            print()
+            ii = 0
+            for index, row in insertLengthDF.iterrows():
+                for cell in dfCols:
+                    print(str(row[cell]) + "\t", end="")
+                print()
+        else:
+        ## Call funtion to plot two violin plots
+            plotMultiReadLengths(insertLengthDF)
         
 ## Exit on error if input files exceeds 6
 if(len(args.filename) > 6):
