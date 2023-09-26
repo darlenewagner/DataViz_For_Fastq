@@ -189,7 +189,7 @@ def plotSingleViolinLifeExp(lifeExp, mean, stdDev, fileStr, titleStr):
     axes1.set_title('U.S. ' + fileStr + ' (2010-2015)', fontsize = BIG_SIZE)
     axes1.set(ylabel='Age in Years')
     axes1.set(xlabel=annotStr)
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLifeExpr_' + titleStr + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLifeExpr_' + titleStr + '.png')
 
 ## Function to plot read lengths of two life expectancy series
 def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, mean, stdDev, fileStr, titleStr, stateCodes, stateCodesDict):
@@ -224,7 +224,7 @@ def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, mean, stdDev, fileStr, tit
     axes1.set_title( titleStr + ' (2010-2015)', fontsize = BIG_SIZE)
     axes1.set(ylabel='Age in Years')
     axes1.set(xlabel=annotStr)
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_1state_' + titleStr + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLen_1state_' + titleStr + '.png')
 
 
 ## Function to plot read lengths of three life expectancy series
@@ -262,7 +262,7 @@ def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdD
     axes1.set(ylabel='Age in Years')
     axes1.set(xlabel=annotStr)
     titleStrMod = re.sub(r',', '', titleStr)
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_2state_' + titleStrMod + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLen_2state_' + titleStrMod + '.png')
 
 ## Function to plot read lengths of three life expectancy series
 def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, stateLifeExp3, mean, stdDev, fileStr, titleStr, stateCodes, stateCodesDict):
@@ -300,7 +300,7 @@ def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, stateLi
     axes1.set(ylabel='Age in Years')
     axes1.set(xlabel=annotStr)
     titleStrMod = re.sub(r',', '', titleStr)
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/violinLen_3state_' + titleStrMod + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLen_3state_' + titleStrMod + '.png')
 
 
 allLifeExpectancy = simple_CSV_File_Processor(args.filename, args.outputType)
