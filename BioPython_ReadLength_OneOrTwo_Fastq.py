@@ -52,7 +52,7 @@ def plotSingleReadLengths(readLengths, fileStr):
     axes1.set_title(fileStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Counts')
     axes1.set(xlabel='Read Lengths')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/readLength_' + fileStr + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/readLength_' + fileStr + '.png')   
 ## Function to plot read lengths of two .fastq files
 def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
     SMALL_SIZE = 22
@@ -75,7 +75,7 @@ def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
     axes1[1].set_title(fileStr2, fontsize = BIG_SIZE)
     axes1[1].set(ylabel='Read Counts')
     axes1[1].set(xlabel='Read Lengths')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/readLen_' + fileStr1 + '_' + fileStr2 + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/readLen_' + fileStr1 + '_' + fileStr2 + '.png')   
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
