@@ -311,6 +311,8 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
 ## for three or four files, invoke plotMultiReadFiles
     elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
+        rQ30 = [0, 0, 0, 0, 0, 0]
+        rLen = [1, 1, 1, 1, 1, 1]
         readPhredDF = pd.Series(dtype=int)
         readPhredDF2 = pd.Series(dtype=int)
         readPHREDDF = pd.DataFrame()
@@ -321,6 +323,14 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
                 for record in SeqIO.parse(fastq, "fastq"):
                     if(len(record.seq) > 0):
                         readPHRED.append(statistics.mean(record.letter_annotations["phred_quality"]))
+                        if(choice2 == 'Y'):
+                            rLen[ii] = rLen[ii] + len(record.seq)
+                            j = 0
+                            while( j < len(record.seq)):
+                                if(record.letter_annotations["phred_quality"][j] >= 30):
+                                    rQ30[ii] = rQ30[ii] + 1
+                                j = j + 1
+                        
             ## Convert readLengths list to pandas Series
             readPhredDF = pd.Series(readPHRED)
             simpFileName.append(getIsolateStr(fnames[ii].name))
@@ -335,6 +345,13 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
             dfCols = list(readPHREDDF)
             for cols in dfCols:
                 print("%s total average PHRED is %0.2f" % (cols, readPHREDDF[cols].mean() ))
+            if(choice2 == 'Y'):
+                jj = 0
+                while(jj < len(dfCols)):
+                    #print(jj)
+                    print("%s PHRED scores above Q30 is %0.2f" % (dfCols[jj], (100*rQ30[jj]/rLen[jj])))
+                    jj = jj + 1
+                
         elif(choice1 == 'L'):
             dfCols = list(readPHREDDF)
             for header in dfCols:
@@ -357,7 +374,4 @@ if(len(args.filename) > 6):
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
 PHREDOfFastqReads(args.filename, args.outputType, args.showQ30)
-
-
-
 
