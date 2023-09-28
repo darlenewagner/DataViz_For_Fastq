@@ -11,7 +11,7 @@ from Bio.SeqIO.QualityIO import FastqGeneralIterator
 
 ## import numpy
 import numpy as np
-#import seaborn as sns
+import seaborn as sns
 
 ## import matplotlib
 from matplotlib import pyplot as plt
@@ -42,6 +42,8 @@ parser.add_argument('filename', nargs='+', type=ext_check('.fastq', '.tsv', '.cs
 
 ## Add attribute '--outputType' to object 'parser'
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], help="--outputType S for simple statistics, --outputType L for list of all read lengths, and --outputType P for matplotlib plots")
+
+parser.add_argument('--titleString', '-t', default='Inserts', help="--outputType S for simple statistics and --outputType P for single histogram plot")
 
 args = parser.parse_args()
 
@@ -98,10 +100,10 @@ def plotSingleReadLengths(readLengths, fileStr):
     vp['cmeans'].set_visible(False)
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
-    axes1.set_title(fileStr, fontsize = BIG_SIZE)
+    axes1.set_title(args.titleString, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLength_' + fileStr + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLength_' + args.titleString + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
 def plotDoubleReadLenths(readLengthDF):
@@ -137,10 +139,10 @@ def plotDoubleReadLenths(readLengthDF):
     vp['cmeans'].set_visible(False)
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
-    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    axes1.set_title(args.titleString, fontsize = BIG_SIZE)
     axes1.set(ylabel='Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLen_' + args.titleString + '.png')
 
 
 def plotMultiReadLengths(readLengthDF):
@@ -187,10 +189,10 @@ def plotMultiReadLengths(readLengthDF):
     vp['cmeans'].set_visible(False)
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
-    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    axes1.set_title(args.titleString, fontsize = BIG_SIZE)
     axes1.set(ylabel='Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/multiViolinLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/multiViolinLen_' + args.titleString + '.png')
     
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
