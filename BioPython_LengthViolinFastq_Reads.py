@@ -43,7 +43,7 @@ parser.add_argument('filename', nargs='+', type=ext_check('.fastq', '.tsv', '.cs
 ## Add attribute '--outputType' to object 'parser'
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], help="--outputType S for simple statistics, --outputType L for list of all read lengths, and --outputType P for matplotlib plots")
 
-parser.add_argument('--titleString', '-t', default='Inserts', help="--outputType S for simple statistics and --outputType P for single histogram plot")
+parser.add_argument('--titleString', '-t', default='Insert/Read Lengths', help="--titleString 'title string for plot and filename'")
 
 args = parser.parse_args()
 
