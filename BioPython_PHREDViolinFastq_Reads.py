@@ -33,14 +33,27 @@ def getIsolateStr(filePathString):
 	fileString = splitStr[fileNameIdx]
 	return fileString
 
+## Usage statement
+usage_text = ''' Examples:
+
+BioPython_PHREDViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType S (for text summary)
+
+BioPython_PHREDViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType P (for plot) --titleString "Raw Reads PHRED Scores" --showQ30 Y
+ 
+'''
+
 ## Initialize argparse object as 'parser'
-parser = argparse.ArgumentParser(description='Show read count and base pair count of one or two filename.fastq files', usage='BioPython_Parsing_FASTQ.py filepath/filename1.fastq filepath/filename2.fastq (optional)')
+parser = argparse.ArgumentParser(description='Show read count and base pair count of one or two filename.fastq files', usage=usage_text)
 
 ## Add attribute 'filename' (the .fastq input file) to object 'parser'
 parser.add_argument('filename', nargs='+', type=ext_check('.fastq', argparse.FileType('r')))
 
 ## Add attribute '--outputType' to object 'parser'
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], help="--outputType S for simple statistics, --outputType L for list of all read lengths, and --outputType P for matplotlib plots")
+
+parser.add_argument('--titleString', '-t', default='Raw Reads PHRED', help="--titleString 'title for plot and filename'")
+
+parser.add_argument('--showQ30', '-q', default='N', choices=['Y', 'N'], help="--showQ30 [Y/N] to print percentage where reads have PHRED scores above 30")
 
 args = parser.parse_args()
 
@@ -69,7 +82,7 @@ def extractData(fnames):
 
 
 ## Function to plot read lengths of one .fastq file
-def plotSingleReadFile(readPHREDs, fileStr):
+def plotSingleReadFile(readPHREDs, fileStr, choice):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
@@ -101,7 +114,7 @@ def plotSingleReadFile(readPHREDs, fileStr):
     fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinPHRED_' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
-def plotDoubleReadFiles(readPHREDDF):
+def plotDoubleReadFiles(readPHREDDF, choice):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
@@ -139,8 +152,8 @@ def plotDoubleReadFiles(readPHREDDF):
     fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinPHRED_' + fileTitle + '.png')
 
 
-def plotMultiReadFiles(readPHREDDF):
-    SMALL_SIZE = 30
+def plotMultiReadFiles(readPHREDDF, choice):
+    SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#00FFFF', '#FF00FF']
@@ -185,44 +198,74 @@ def plotMultiReadFiles(readPHREDDF):
     axes1.set_title(fileTitle, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/multiViolinPHRED_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/Noro_ViolinPHREDqual_' + fileTitle + '.png')
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def PHREDOfFastqReads(fnames, choice):
+def PHREDOfFastqReads(fnames, choice1, choice2):
     readCount = 0
     forwardAvg = []
     reverseAvg = []
     f = 0
 ## for exactly one file, invoke plotSingleReadFile
     if(len(fnames) < 2):
+        #j = 0
+        r1Q30 = 0
+        r1Len = 1
         with open(fnames[f].name, 'r') as fastq:
             for record in SeqIO.parse(fastq, "fastq"):
                 if(len(record.seq) > 0):
                     readCount = readCount + 1
-                    #print(quality)
                     forwardAvg.append(statistics.mean(record.letter_annotations["phred_quality"]))
-        if(choice == 'S'):
+                    if(choice2 == 'Y'):
+                        r1Len = r1Len + len(record.seq)
+                        j = 0
+                        while( j < len(record.seq)):
+                            if(record.letter_annotations["phred_quality"][j] >= 30):
+                                r1Q30 = r1Q30 + 1
+                                #print(r1Q30)
+                            j = j + 1
+        if(choice1 == 'S'):
             print("%s total average PHRED Score is %0.2f" % (getIsolateStr(fnames[f].name), statistics.mean(forwardAvg)))
-        elif(choice == 'L'):
+            if(choice2 == 'Y'):
+                print("%s PHRED Scores above Q30 is %0.2f" % (getIsolateStr(fnames[f].name), (100*r1Q30/r1Len)))
+        elif(choice1 == 'L'):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in forwardAvg]
         else:
-            plotSingleReadFile(forwardAvg, getIsolateStr(fnames[f].name))
+            plotSingleReadFile(forwardAvg, getIsolateStr(fnames[f].name), choice2)
 ## for exactly two files, invoke plotDoubleReadFiles
     elif(len(fnames) == 2):
+        rQ30 = [0, 0]
+        rLen = [1, 1]
+
         readPhredDF = pd.DataFrame()
         with open(fnames[0].name, 'r') as fastq:
             for record in SeqIO.parse(fastq, "fastq"):
                 if(len(record.seq) > 0):
                     forwardAvg.append(statistics.mean(record.letter_annotations["phred_quality"]))
-                    #print(quality)
+                    if(choice2 == 'Y'):
+                        rLen[0] = rLen[0] + len(record.seq)
+                        j = 0
+                        while( j < len(record.seq)):
+                            if(record.letter_annotations["phred_quality"][j] >= 30):
+                                rQ30[0] = rQ30[0] + 1
+                            j = j + 1
+                    
         ## Convert read Phred scores list to pandas Series
         readPhrDF = pd.Series(forwardAvg)
         with open(fnames[1].name, 'r') as fastq2:
             for record in SeqIO.parse(fastq2, "fastq"):
                 if(len(record.seq) > 0):
                     reverseAvg.append(statistics.mean(record.letter_annotations["phred_quality"]))
+                    if(choice2 == 'Y'):
+                        rLen[1] = rLen[1] + len(record.seq)
+                        j = 0
+                        while( j < len(record.seq)):
+                            if(record.letter_annotations["phred_quality"][j] >= 30):
+                                rQ30[1] = rQ30[1] + 1
+                            j = j + 1
+                    
         ## Create column headers
         simpFileName1 = getIsolateStr(fnames[0].name)
         simpFileName2 = getIsolateStr(fnames[1].name)
@@ -241,24 +284,30 @@ def PHREDOfFastqReads(fnames, choice):
         readPhrDF2 = pd.Series(reverseAvg)
         ## Create pandas DataFrame with truncated fnames as column headers
         readPhredDF = extractData(fnames)
+        #readPHREDDF = pd.DataFrame({fnamesl1[0] : readLenDF, fnamesl2[0] : readLenDF2})
         ## Coerce string 'Nan' to np.nan
-        if(choice == 'S'):
-            dfCols = list(readPHREDDF)
+        if(choice1 == 'S'):
+            dfCols = list(readPhredDF)
             for cols in dfCols:
-                print("%s total average PHRED is %0.2f" % (cols, readPHREDDF[cols].mean() ))
-        elif(choice == 'L'):
-            dfCols = list(readPHREDDF)
+                print("%s total average PHRED is %0.2f" % (cols, readPhredDF[cols].mean() ))
+            if(choice2 == 'Y'):
+                ii = 0
+                for entry in rQ30:
+                    print("%s PHRED scores above Q30 is %0.2f" % (dfCols[ii], (100*entry/rLen[ii])))
+                    ii = ii + 1
+        elif(choice1 == 'L'):
+            dfCols = list(readPhredDF)
             for header in dfCols:
                 print("%s\t" % (header), end="")
             print()
             ii = 0
-            for index, row in readPHREDDF.iterrows():
+            for index, row in readPhredDF.iterrows():
                 for cell in dfCols:
                     print(str(row[cell]) + "\t", end="")
                 print()
         else:
         ## Call funtion to plot two boxplots
-            plotDoubleReadFiles(readPhredDF)
+            plotDoubleReadFiles(readPhredDF, choice2)
 ## for three or four files, invoke plotMultiReadFiles
     elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
@@ -282,11 +331,11 @@ def PHREDOfFastqReads(fnames, choice):
                 fnamesl1[0] = fnamesl1[0] + '_R2'
             readPHREDDF[fnamesl1[0]] = readPhredDF
             ii = ii + 1
-        if(choice == 'S'):
+        if(choice1 == 'S'):
             dfCols = list(readPHREDDF)
             for cols in dfCols:
                 print("%s total average PHRED is %0.2f" % (cols, readPHREDDF[cols].mean() ))
-        elif(choice == 'L'):
+        elif(choice1 == 'L'):
             dfCols = list(readPHREDDF)
             for header in dfCols:
                 print("%s\t" % (header), end="")
@@ -298,7 +347,7 @@ def PHREDOfFastqReads(fnames, choice):
                 print()
         else:
         ## Call function to plot more than two boxplots
-            plotMultiReadFiles(readPHREDDF)
+            plotMultiReadFiles(readPHREDDF, choice2)
             
                 
 ## Exit on error if input files exceeds 6
@@ -307,7 +356,7 @@ if(len(args.filename) > 6):
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
-PHREDOfFastqReads(args.filename, args.outputType)
+PHREDOfFastqReads(args.filename, args.outputType, args.showQ30)
 
 
 
