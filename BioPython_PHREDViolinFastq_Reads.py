@@ -82,7 +82,7 @@ def extractData(fnames):
 
 
 ## Function to plot read lengths of one .fastq file
-def plotSingleReadFile(readPHREDs, fileStr, choice):
+def plotSingleReadFile(readPHREDs, fileStr, title, choice, rQ30, rLen, fileMean, fileMedian):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
@@ -108,13 +108,18 @@ def plotSingleReadFile(readPHREDs, fileStr, choice):
     vp['cmeans'].set_visible(False)
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
-    axes1.set_title(fileStr, fontsize = BIG_SIZE)
+    annotStr = "Median = %0.2f\nMean = %0.2f" % (fileMedian[0], fileMean[0])
+    axes1.text(0.5, 25, annotStr, fontsize=26)
+    if(choice == 'Y'):
+        moreAnnotStr = "%0.2f" % (100*rQ30/rLen)
+        axes1.text(0.5, 24, "Q30 = " + moreAnnotStr + "%", fontsize=26)
+    axes1.set_title(title, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinPHRED_' + fileStr + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinSinglePHRED_' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
-def plotDoubleReadFiles(readPHREDDF, choice):
+def plotDoubleReadFiles(readPHREDDF, choice, title, rQ30, rLen, fileMean, fileMedian):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
@@ -146,16 +151,26 @@ def plotDoubleReadFiles(readPHREDDF, choice):
     vp['cmeans'].set_visible(False)
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
-    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    axes1.set_title(title, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
+    annotStrA = "Median = %0.2f\nMean = %0.2f" % (fileMedian[0], fileMean[0])
+    axes1.text(0.5, 25, annotStrA, fontsize=26)
+    annotStrB = "Median = %0.2f\nMean = %0.2f" % (fileMedian[1], fileMean[1])
+    axes1.text(1.5, 25, annotStrB, fontsize=26)
+    if(choice == 'Y'):
+        annotStr1 = "%0.2f" % (100*rQ30[0]/rLen[0])
+        axes1.text(0.5, 24, "Q30 = " + annotStr1 + "%", fontsize=24)
+        annotStr2 = "%0.2f" % (100*rQ30[1]/rLen[1])
+        axes1.text(1.5, 24, "Q30 = " + annotStr2 + "%", fontsize=24)
     fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinPHRED_' + fileTitle + '.png')
 
 
-def plotMultiReadFiles(readPHREDDF, choice):
+def plotMultiReadFiles(readPHREDDF, choice, title, rQ30, rLen, fileMean, fileMedian):
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
+    textPositions = [0.5, 1.5, 2.5, 3.5, 4.5, 5.5]
     colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#00FFFF', '#FF00FF']
     fig1, axes1 = plt.subplots(figsize=(27,19))
     fig1.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.22)
@@ -195,15 +210,29 @@ def plotMultiReadFiles(readPHREDDF, choice):
     vp['cmeans'].set_visible(False)
     vp['cmedians'].set_colors('black')
     vp['cmedians'].set_linewidth(3)
-    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    p = 0
+    while(p < len(x_labels)):
+        annotStrA = "Median = %0.2f\nMean = %0.2f" % (fileMedian[p], fileMean[p])
+        axes1.text(textPositions[p], 25, annotStrA, fontsize=22)
+        p = p + 1
+    p = 0
+    if(choice == 'Y'):
+        while(p < len(x_labels)):
+            annotStr1 = "%0.2f" % (100*rQ30[p]/rLen[p])
+            axes1.text(textPositions[p], 24.2, "Q30 = " + annotStr1 + "%", fontsize=22)
+            p = p + 1
+            
+    axes1.set_title(title, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/home-pure/ydn3/output_of_DataViz_For_Fastq/Noro_ViolinPHREDqual_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/ViolinPHREDqual_' + fileTitle + '.png')
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def PHREDOfFastqReads(fnames, choice1, choice2):
+def PHREDOfFastqReads(fnames, title, choice1, choice2):
     readCount = 0
+    fileMean = []
+    fileMedian = []
     forwardAvg = []
     reverseAvg = []
     f = 0
@@ -225,6 +254,8 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
                                 r1Q30 = r1Q30 + 1
                                 #print(r1Q30)
                             j = j + 1
+        fileMean.append(statistics.mean(forwardAvg))
+        fileMedian.append(statistics.median(forwardAvg))
         if(choice1 == 'S'):
             print("%s total average PHRED Score is %0.2f" % (getIsolateStr(fnames[f].name), statistics.mean(forwardAvg)))
             if(choice2 == 'Y'):
@@ -233,7 +264,7 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in forwardAvg]
         else:
-            plotSingleReadFile(forwardAvg, getIsolateStr(fnames[f].name), choice2)
+            plotSingleReadFile(forwardAvg, getIsolateStr(fnames[f].name), title, choice2, r1Q30, r1Len, fileMean, fileMedian)
 ## for exactly two files, invoke plotDoubleReadFiles
     elif(len(fnames) == 2):
         rQ30 = [0, 0]
@@ -286,8 +317,12 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
         readPhredDF = extractData(fnames)
         #readPHREDDF = pd.DataFrame({fnamesl1[0] : readLenDF, fnamesl2[0] : readLenDF2})
         ## Coerce string 'Nan' to np.nan
+        dfCols = list(readPhredDF)
+        for c in dfCols:
+            fileMean.append(readPhredDF[c].mean())
+            fileMedian.append(readPhredDF[c].median())
+
         if(choice1 == 'S'):
-            dfCols = list(readPhredDF)
             for cols in dfCols:
                 print("%s total average PHRED is %0.2f" % (cols, readPhredDF[cols].mean() ))
             if(choice2 == 'Y'):
@@ -307,7 +342,7 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
                 print()
         else:
         ## Call funtion to plot two boxplots
-            plotDoubleReadFiles(readPhredDF, choice2)
+            plotDoubleReadFiles(readPhredDF, choice2, title, rQ30, rLen, fileMean, fileMedian)
 ## for three or four files, invoke plotMultiReadFiles
     elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
@@ -341,8 +376,14 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
                 fnamesl1[0] = fnamesl1[0] + '_R2'
             readPHREDDF[fnamesl1[0]] = readPhredDF
             ii = ii + 1
+
+        dfCols = list(readPHREDDF)
+        for c in dfCols:
+            fileMean.append(readPHREDDF[c].mean())
+            fileMedian.append(readPHREDDF[c].median())
+
+
         if(choice1 == 'S'):
-            dfCols = list(readPHREDDF)
             for cols in dfCols:
                 print("%s total average PHRED is %0.2f" % (cols, readPHREDDF[cols].mean() ))
             if(choice2 == 'Y'):
@@ -364,7 +405,7 @@ def PHREDOfFastqReads(fnames, choice1, choice2):
                 print()
         else:
         ## Call function to plot more than two boxplots
-            plotMultiReadFiles(readPHREDDF, choice2)
+            plotMultiReadFiles(readPHREDDF, choice2, title, rQ30, rLen, fileMean, fileMedian)
             
                 
 ## Exit on error if input files exceeds 6
@@ -373,5 +414,5 @@ if(len(args.filename) > 6):
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
-PHREDOfFastqReads(args.filename, args.outputType, args.showQ30)
+PHREDOfFastqReads(args.filename, args.titleString, args.outputType, args.showQ30)
 
