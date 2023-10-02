@@ -33,6 +33,10 @@ def getIsolateStr(filePathString):
 	fileString = splitStr[fileNameIdx]
 	return fileString
 
+## Set up logger to show runtime progress to the user
+logger = logging.getLogger("windowQualPrinseqLite_R1andR2.py")
+logger.setLevel(logging.INFO)
+
 ## Usage statement
 usage_text = ''' Examples:
 
@@ -56,6 +60,17 @@ parser.add_argument('--titleString', '-t', default='Raw Reads PHRED', help="--ti
 parser.add_argument('--showQ30', '-q', default='N', choices=['Y', 'N'], help="--showQ30 [Y/N] to print percentage where reads have PHRED scores above 30")
 
 args = parser.parse_args()
+
+## configuring the stream handler for logging
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+#add formatter to ch
+ch.setFormatter(formatter)
+#add ch to logger
+logger.addHandler(ch)
+
 
 ## Function to extract Fastq read length (other version extracts PHRED Quality)
 def extractData(fnames):
@@ -229,7 +244,7 @@ def plotMultiReadFiles(readPHREDDF, choice, title, rQ30, rLen, fileMean, fileMed
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def PHREDOfFastqReads(fnames, title, choice1, choice2):
+def PHREDOfFastqReads(fnames, title, choice1, choice2, logger):
     readCount = 0
     fileMean = []
     fileMedian = []
@@ -241,12 +256,16 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
         #j = 0
         r1Q30 = 0
         r1Len = 1
+        logger.info("Parsing one fastq file.")
         with open(fnames[f].name, 'r') as fastq:
+            if(choice2 == 'Y'):
+                logger.info("Starting calculations of Q30.")
             for record in SeqIO.parse(fastq, "fastq"):
                 if(len(record.seq) > 0):
                     readCount = readCount + 1
                     forwardAvg.append(statistics.mean(record.letter_annotations["phred_quality"]))
                     if(choice2 == 'Y'):
+                        
                         r1Len = r1Len + len(record.seq)
                         j = 0
                         while( j < len(record.seq)):
@@ -254,6 +273,8 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
                                 r1Q30 = r1Q30 + 1
                                 #print(r1Q30)
                             j = j + 1
+            if(choice2 == 'Y'):
+                logger.info("Completed calculations of Q30.")
         fileMean.append(statistics.mean(forwardAvg))
         fileMedian.append(statistics.median(forwardAvg))
         if(choice1 == 'S'):
@@ -264,14 +285,17 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in forwardAvg]
         else:
+            logger.info("Plotting single series from one fastq file.")
             plotSingleReadFile(forwardAvg, getIsolateStr(fnames[f].name), title, choice2, r1Q30, r1Len, fileMean, fileMedian)
 ## for exactly two files, invoke plotDoubleReadFiles
     elif(len(fnames) == 2):
         rQ30 = [0, 0]
         rLen = [1, 1]
-
+        logger.info("Parsing two fastq files.")
         readPhredDF = pd.DataFrame()
         with open(fnames[0].name, 'r') as fastq:
+            if(choice2 == 'Y'):
+                logger.info("Starting calculations of Q30 for " + getIsolateStr(fnames[0].name) + ".")
             for record in SeqIO.parse(fastq, "fastq"):
                 if(len(record.seq) > 0):
                     forwardAvg.append(statistics.mean(record.letter_annotations["phred_quality"]))
@@ -282,10 +306,13 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
                             if(record.letter_annotations["phred_quality"][j] >= 30):
                                 rQ30[0] = rQ30[0] + 1
                             j = j + 1
-                    
+            if(choice2 == 'Y'):
+                logger.info("Completed calculations of Q30 for " + getIsolateStr(fnames[0].name) + ".")
         ## Convert read Phred scores list to pandas Series
         readPhrDF = pd.Series(forwardAvg)
         with open(fnames[1].name, 'r') as fastq2:
+            if(choice2 == 'Y'):
+                logger.info("Starting calculations of Q30 for " + getIsolateStr(fnames[1].name) + ".")
             for record in SeqIO.parse(fastq2, "fastq"):
                 if(len(record.seq) > 0):
                     reverseAvg.append(statistics.mean(record.letter_annotations["phred_quality"]))
@@ -296,7 +323,8 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
                             if(record.letter_annotations["phred_quality"][j] >= 30):
                                 rQ30[1] = rQ30[1] + 1
                             j = j + 1
-                    
+            if(choice2 == 'Y'):
+                logger.info("Completed calculations of Q30 for " + getIsolateStr(fnames[1].name) + ".")
         ## Create column headers
         simpFileName1 = getIsolateStr(fnames[0].name)
         simpFileName2 = getIsolateStr(fnames[1].name)
@@ -341,19 +369,23 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
                     print(str(row[cell]) + "\t", end="")
                 print()
         else:
-        ## Call funtion to plot two boxplots
+            ## Call function to plot two violin plots
+            logger.info("Plotting series from two fastq files.")
             plotDoubleReadFiles(readPhredDF, choice2, title, rQ30, rLen, fileMean, fileMedian)
 ## for three or four files, invoke plotMultiReadFiles
     elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
         rQ30 = [0, 0, 0, 0, 0, 0]
         rLen = [1, 1, 1, 1, 1, 1]
+        logger.info("Parsing " + str(len(fnames)) + " fastq files.")
         readPhredDF = pd.Series(dtype=int)
         readPhredDF2 = pd.Series(dtype=int)
         readPHREDDF = pd.DataFrame()
         simpFileName = []
         while(ii < len(fnames)):
             readPHRED = []
+            if(choice2 == 'Y'):
+                logger.info("Starting calculations of Q30 for " + getIsolateStr(fnames[ii].name) + ".")
             with open(fnames[ii].name, 'r') as fastq:
                 for record in SeqIO.parse(fastq, "fastq"):
                     if(len(record.seq) > 0):
@@ -365,7 +397,8 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
                                 if(record.letter_annotations["phred_quality"][j] >= 30):
                                     rQ30[ii] = rQ30[ii] + 1
                                 j = j + 1
-                        
+            if(choice2 == 'Y'):
+                logger.info("Completed calculations of Q30 for " + getIsolateStr(fnames[ii].name) + ".")
             ## Convert readLengths list to pandas Series
             readPhredDF = pd.Series(readPHRED)
             simpFileName.append(getIsolateStr(fnames[ii].name))
@@ -405,14 +438,14 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2):
                 print()
         else:
         ## Call function to plot more than two boxplots
+            logger.info("Plotting series from " + str(len(fnames)) + " fastq files.")
             plotMultiReadFiles(readPHREDDF, choice2, title, rQ30, rLen, fileMean, fileMedian)
             
-                
 ## Exit on error if input files exceeds 6
 if(len(args.filename) > 6):
     sys.exit("BioPython_LengthMultiFastq_Reads.py accepts no more than six .fastq files as input.")
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
-PHREDOfFastqReads(args.filename, args.titleString, args.outputType, args.showQ30)
+PHREDOfFastqReads(args.filename, args.titleString, args.outputType, args.showQ30, logger)
 
