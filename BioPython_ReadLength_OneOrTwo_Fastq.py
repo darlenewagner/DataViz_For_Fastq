@@ -36,10 +36,12 @@ parser.add_argument('filename', nargs='+', type=ext_check('.fastq', argparse.Fil
 ## Add attribute '--outputType' to object 'parser'
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], help="--outputType S for simple statistics, --outputType L for list of all read lengths, and --outputType P for matplotlib plots")
 
+parser.add_argument('--titleString', '-t', default='Read Lengths', help="--titleString 'title string for plot and filename'")
+
 args = parser.parse_args()
 
 ## Function to plot read lengths of one .fastq file
-def plotSingleReadLengths(readLengths, fileStr):
+def plotSingleReadLengths(readLengths, fileStr, titleStr):
     SMALL_SIZE = 26
     MEDIUM_SIZE = 30
     BIG_SIZE = 34
@@ -49,12 +51,12 @@ def plotSingleReadLengths(readLengths, fileStr):
     axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
     axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
     axes1.hist(readLengths, bins = 40, color='blue')
-    axes1.set_title(fileStr, fontsize = BIG_SIZE)
+    axes1.set_title(titleStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Counts')
     axes1.set(xlabel='Read Lengths')
     fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/readLength_' + fileStr + '.png')   
 ## Function to plot read lengths of two .fastq files
-def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
+def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2, titleStr):
     SMALL_SIZE = 22
     MEDIUM_SIZE = 26
     BIG_SIZE = 32
@@ -64,7 +66,7 @@ def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
     axes1[0].tick_params(axis='x', labelsize=SMALL_SIZE)
     axes1[0].tick_params(axis='y', labelsize=SMALL_SIZE)
     axes1[0].hist(readLengths1, bins = 40, color='blue')
-    axes1[0].set_title(fileStr1, fontsize = BIG_SIZE)
+    axes1[0].set_title(titleStr + ", A", fontsize = BIG_SIZE)
     axes1[0].set(ylabel='Read Counts')
     axes1[0].set(xlabel='Read Lengths')
     axes1[1].xaxis.label.set_size(MEDIUM_SIZE)
@@ -72,14 +74,14 @@ def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2):
     axes1[1].tick_params(axis='x', labelsize=SMALL_SIZE)
     axes1[1].tick_params(axis='y', labelsize=SMALL_SIZE)
     axes1[1].hist(readLengths2, bins = 40, color='red')
-    axes1[1].set_title(fileStr2, fontsize = BIG_SIZE)
+    axes1[1].set_title(titleStr + ", B", fontsize = BIG_SIZE)
     axes1[1].set(ylabel='Read Counts')
     axes1[1].set(xlabel='Read Lengths')
     fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/readLen_' + fileStr1 + '_' + fileStr2 + '.png')   
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def lengthOfFastqReads(fnames, choice):
+def lengthOfFastqReads(fnames, choice, titleStr):
     readCount = 0
     readLengths = []
     readLengths2 = []
@@ -96,7 +98,7 @@ def lengthOfFastqReads(fnames, choice):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in readLengths]
         else:
-            plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name))
+            plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name), titleStr)
     elif(len(fnames) == 2):
         with open(fnames[0].name, 'r') as fastq:
             for header, sequence, quality in FastqGeneralIterator(fastq):
@@ -137,7 +139,7 @@ def lengthOfFastqReads(fnames, choice):
                     print("NaN\t%i" % (readLengths2[jj]))
                     jj = jj + 1
         else:
-            plotDoubleReadLengths(readLengths, readLengths2, getIsolateStr(fnames[0].name), getIsolateStr(fnames[1].name))
+            plotDoubleReadLengths(readLengths, readLengths2, getIsolateStr(fnames[0].name), getIsolateStr(fnames[1].name), titleStr)
                 
 ## Exit on error if input files exceeds 2
 if(len(args.filename) > 2):
@@ -145,7 +147,7 @@ if(len(args.filename) > 2):
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
-lengthOfFastqReads(args.filename, args.outputType)
+lengthOfFastqReads(args.filename, args.outputType, args.titleString)
 
 
 
