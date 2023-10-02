@@ -34,6 +34,10 @@ def getIsolateStr(filePathString):
 	fileString = splitStr[fileNameIdx]
 	return fileString
 
+## Set up logger to show runtime progress to the user
+logger = logging.getLogger("BioPython_LengthViolinFastq_Reads.py")
+logger.setLevel(logging.INFO)
+
 ## Initialize argparse object as 'parser'
 parser = argparse.ArgumentParser(description='Show read count and base pair count of one to six filename.fastq files (alternate: Insert length .tsv files)', usage='BioPython_Parsing_FASTQ.py filepath/filename1.fastq filepath/filename2.fastq (optional)')
 
@@ -46,6 +50,16 @@ parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], 
 parser.add_argument('--titleString', '-t', default='Insert/Read Lengths', help="--titleString 'title string for plot and filename'")
 
 args = parser.parse_args()
+
+## configuring the stream handler for logging
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+#add formatter to ch
+ch.setFormatter(formatter)
+#add ch to logger
+logger.addHandler(ch)
 
 ## Function to extract Fastq read length (other version extracts PHRED Quality)
 def extractFastqData(fnames):
@@ -196,12 +210,13 @@ def plotMultiReadLengths(readLengthDF):
     
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def lengthOfFastqReads(fnames, choice):
+def lengthOfFastqReads(fnames, choice, logger):
     readCount = 0
     readLengths = []
     readLengths2 = []
     f = 0
     if(len(fnames) < 2):
+        logger.info("Parsing one fastq file.")
         with open(fnames[f].name, 'r') as fastq:
             for header, sequence, quality in FastqGeneralIterator(fastq):
                 if(len(sequence) > 0):
@@ -213,9 +228,11 @@ def lengthOfFastqReads(fnames, choice):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in readLengths]
         else:
+            logger.info("Plotting single series read lengths from one fastq file.")
             plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name))
 ## for exactly two files, invoke plotDoubleReadLengths
     elif(len(fnames) == 2):
+        logger.info("Parsing two fastq files.")
         readLengthDF = pd.DataFrame()
         ## Call function 'extractFastqData' to read multiple .fastq files
         readLengthDF = extractFastqData(fnames)
@@ -238,9 +255,11 @@ def lengthOfFastqReads(fnames, choice):
                 print()
         else:
         ## Call funtion to plot two boxplots
+            logger.info("Plotting series read lengths from two fastq files.")
             plotDoubleReadLenths(readLengthDF)
 ## for three or four files, invoke plotDoubleReadLengths
     elif((len(fnames) > 2) and (len(fnames) < 7)):
+        logger.info("Parsing " + str(len(fnames)) + " fastq files.")
         readLenDF = pd.Series(dtype=int)
         readLenDF2 = pd.Series(dtype=int)
         readLengthDF = pd.DataFrame()
@@ -262,15 +281,17 @@ def lengthOfFastqReads(fnames, choice):
                 print()
         else:
         ## Call function to plot more than two violin plots
+            logger.info("Plotting series read lengths from " + str(len(fnames)) + " fastq files.")
             plotMultiReadLengths(readLengthDF)
 
-def getInsertLengths(fnames, choice):
+def getInsertLengths(fnames, choice, logger):
     insertCount = 0
     insertLengths = []
     insertLengths2 = []
     insertLengthDF = pd.DataFrame()
     f = 0
     if(len(fnames) < 2):
+        logger.info("Parsing one insert lengths tsv file.")
         with open(fnames[0].name, 'r') as tsv:
             for line in csv.reader(tsv, delimiter="\t"):
                 if(insertCount > 0):
@@ -284,9 +305,11 @@ def getInsertLengths(fnames, choice):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in insertLengths]
         else:
+            logger.info("Plotting single series insert lengths from one fastq file.")
             plotSingleReadLengths(insertLengths, getIsolateStr(fnames[f].name))
 ## for exactly two files, invoke plotDoubleReadLengths
     elif(len(fnames) == 2):
+        logger.info("Parsing two insert length tsv files.")
         with open(fnames[0].name, 'r') as tsv1:
             for line in csv.reader(tsv1, delimiter="\t"):
                 if(insertCount > 0):
@@ -321,9 +344,11 @@ def getInsertLengths(fnames, choice):
                 print()
         else:
         ## Call funtion to plot two violin plots
+            logger.info("Plotting two series of insert lengths from two fastq files.")
             plotDoubleReadLenths(insertLengthDF)
             
     elif((len(fnames) > 2) and (len(fnames) < 7)):
+        logger.info("Parsing " + str(len(fnames)) + " insert length tsv files.")
         tempInsertSeries = pd.Series()
         fileIdx = 0
         while(fileIdx < len(fnames)):
@@ -355,6 +380,7 @@ def getInsertLengths(fnames, choice):
                 print()
         else:
         ## Call funtion to plot two violin plots
+            logger.info("Plotting series insert lengths from " + str(len(fnames)) + " fastq files.")
             plotMultiReadLengths(insertLengthDF)
         
 ## Exit on error if input files exceeds 6
@@ -365,9 +391,9 @@ fileStr = getIsolateStr(args.filename[0].name)
 
 if(fileStr.endswith('.fastq')):
     ## Invoke function that plots NGS reads for each file in command-line arguments
-    lengthOfFastqReads(args.filename, args.outputType)
+    lengthOfFastqReads(args.filename, args.outputType, logger)
 elif(fileStr.endswith('.tsv') or fileStr.endswith('.csv')):
     ## Invoke function that plots NGS read insert lengths for each file in command-line arguments
-    getInsertLengths(args.filename, args.outputType)
+    getInsertLengths(args.filename, args.outputType, logger)
 
 
