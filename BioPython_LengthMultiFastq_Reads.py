@@ -33,6 +33,10 @@ def getIsolateStr(filePathString):
 	fileString = splitStr[fileNameIdx]
 	return fileString
 
+## Set up logger to show runtime progress to the user
+logger = logging.getLogger("BioPython_LengthMultiFastq_Reads.py")
+logger.setLevel(logging.INFO)
+
 ## Initialize argparse object as 'parser'
 parser = argparse.ArgumentParser(description='Show read count and base pair count of one or two filename.fastq files', usage='BioPython_Parsing_FASTQ.py filepath/filename1.fastq filepath/filename2.fastq (optional)')
 
@@ -42,7 +46,19 @@ parser.add_argument('filename', nargs='+', type=ext_check('.fastq', argparse.Fil
 ## Add attribute '--outputType' to object 'parser'
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], help="--outputType S for simple statistics, --outputType L for list of all read lengths, and --outputType P for matplotlib plots")
 
+parser.add_argument('--titleString', '-t', default='Read Lengths', help="--titleString 'title string for plot and filename'")
+
 args = parser.parse_args()
+
+## configuring the stream handler for logging
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+#add formatter to ch
+ch.setFormatter(formatter)
+#add ch to logger
+logger.addHandler(ch)
 
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadLengths(readLengths, fileStr):
@@ -68,7 +84,7 @@ def plotSingleReadLengths(readLengths, fileStr):
     fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/boxLength' + fileStr + '.png')   
 
 ## Function to plot read lengths of two or more .fastq files
-def plotDoubleReadLenths(readLengthDF):
+def plotDoubleReadLenths(readLengthDF, fileStr):
     SMALL_SIZE = 30
     MEDIUM_SIZE = 34
     BIG_SIZE = 38
@@ -92,13 +108,13 @@ def plotDoubleReadLenths(readLengthDF):
     bp = axes1.boxplot([filteredReadLength1, filteredReadLength2], labels=x_labels, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops)
     for patch, color in zip(bp['boxes'], colors):
         patch.set_facecolor(color)
-    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    axes1.set_title(fileStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/boxLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/boxLen_' + fileStr + '.png')
 
 
-def plotMultiReadLengths(readLengthDF):
+def plotMultiReadLengths(readLengthDF, fileStr):
     SMALL_SIZE = 28
     MEDIUM_SIZE = 34
     BIG_SIZE = 38
@@ -135,20 +151,21 @@ def plotMultiReadLengths(readLengthDF):
         bp = axes1.boxplot([filteredReadLength[x_labels[0]], filteredReadLength[x_labels[1]], filteredReadLength[x_labels[2]], filteredReadLength[x_labels[3]], filteredReadLength[x_labels[4]], filteredReadLength[x_labels[5]]], labels=x_labels, notch=False, sym='+', vert=True, patch_artist=True, boxprops = dict(linewidth = 5), medianprops=medianprops, whis=[15, 85], whiskerprops=whiskerprops, capprops=capprops, showmeans=True, meanprops=meanpointprops)
     for patch, color in zip(bp['boxes'], colors):
         patch.set_facecolor(color)
-    axes1.set_title(fileTitle, fontsize = BIG_SIZE)
+    axes1.set_title(fileStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Lengths (bp)')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/multiBoxLen_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/multiBoxLen_' + fileStr + '.png')
 
     
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def lengthOfFastqReads(fnames, choice):
+def lengthOfFastqReads(fnames, choice, fileStr, logger):
     readCount = 0
     readLengths = []
     readLengths2 = []
     f = 0
     if(len(fnames) < 2):
+        logger.info("Parsing one fastq file.")
         with open(fnames[f].name, 'r') as fastq:
             for header, sequence, quality in FastqGeneralIterator(fastq):
                 if(len(sequence) > 0):
@@ -160,9 +177,11 @@ def lengthOfFastqReads(fnames, choice):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in readLengths]
         else:
-            plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name))
+            logger.info("Plotting single series read lengths from one fastq file.")
+            plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name), fileStr)
 ## for exactly two files, invoke plotDoubleReadLengths
     elif(len(fnames) == 2):
+        logger.info("Parsing two fastq files.")
         with open(fnames[0].name, 'r') as fastq:
             for header, sequence, quality in FastqGeneralIterator(fastq):
                 if(len(sequence) > 0):
@@ -202,7 +221,8 @@ def lengthOfFastqReads(fnames, choice):
                 print(row[fnamesl1[0]], "\t", row[fnamesl2[0]])
         else:
         ## Call funtion to plot two boxplots
-            plotDoubleReadLenths(readLengthDF)
+            logger.info("Plotting series read lengths from two fastq files.")
+            plotDoubleReadLenths(readLengthDF, fileStr)
 ## for three or four files, invoke plotDoubleReadLengths
     elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
@@ -210,6 +230,7 @@ def lengthOfFastqReads(fnames, choice):
         readLenDF2 = pd.Series(dtype=int)
         readLengthDF = pd.DataFrame()
         simpFileName = []
+        logger.info("Parsing " + str(len(fnames)) + " fastq files.")
         while(ii < len(fnames)):
             readLengths = []
             with open(fnames[ii].name, 'r') as fastq:
@@ -242,7 +263,8 @@ def lengthOfFastqReads(fnames, choice):
                 print()
         else:
         ## Call function to plot more than two boxplots
-            plotMultiReadLengths(readLengthDF)
+            logger.info("Plotting series read lengths from " + str(len(fnames)) + " fastq files.")
+            plotMultiReadLengths(readLengthDF, fileStr)
             
                 
 ## Exit on error if input files exceeds 6
@@ -251,7 +273,7 @@ if(len(args.filename) > 6):
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
-lengthOfFastqReads(args.filename, args.outputType)
+lengthOfFastqReads(args.filename, args.outputType, args.titleString, logger)
 
 
 
