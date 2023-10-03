@@ -34,7 +34,7 @@ def getIsolateStr(filePathString):
 	return fileString
 
 ## Set up logger to show runtime progress to the user
-logger = logging.getLogger("windowQualPrinseqLite_R1andR2.py")
+logger = logging.getLogger("BioPython_PHREDViolinFastq_Reads.py")
 logger.setLevel(logging.INFO)
 
 ## Usage statement
@@ -443,7 +443,7 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2, logger):
             
 ## Exit on error if input files exceeds 6
 if(len(args.filename) > 6):
-    sys.exit("BioPython_LengthMultiFastq_Reads.py accepts no more than six .fastq files as input.")
+    sys.exit("BioPython_LengthMultiFastq_Reads.py accepts no more than six fastq files as input.")
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
