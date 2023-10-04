@@ -298,8 +298,8 @@ def getInsertLengths(fnames, choice, logger):
                     insertLengths.append(int(line[1]))
                 insertCount = insertCount + 1
 
-        #fnames[0].close()
         if(choice == 'S'):
+            print("%s median insert length is %i base pairs" % (getIsolateStr(fnames[f].name), statistics.median(insertLengths)))
             print("%s average insert length is %i base pairs" % (getIsolateStr(fnames[f].name), statistics.mean(insertLengths)))
         elif(choice == 'L'):
             print("%s" % getIsolateStr(fnames[f].name))
@@ -330,6 +330,7 @@ def getInsertLengths(fnames, choice, logger):
         if(choice == 'S'):
             #print(insertLengthDF.tail())
             for cols in list(insertLengthDF):
+                print("%s median insert length is %i base pairs" % ( cols, insertLengthDF[cols].median() ))
                 print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
                 #print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
         elif(choice == 'L'):
@@ -367,6 +368,7 @@ def getInsertLengths(fnames, choice, logger):
             fileIdx = fileIdx + 1
         if(choice == 'S'):
             for cols in list(insertLengthDF):
+                print("%s median insert length is %i base pairs" % ( cols, insertLengthDF[cols].median() ))
                 print("%s average insert length is %i base pairs" % ( cols, insertLengthDF[cols].mean() ))
         elif(choice == 'L'):
             dfCols = list(insertLengthDF)
