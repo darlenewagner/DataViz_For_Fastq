@@ -40,6 +40,10 @@ def getIsolateStr(filePathString):
 	fileString = splitStr[fileNameIdx]
 	return fileString
 
+## Set up logger to show runtime progress to the user
+logger = logging.getLogger("Plotly_ParseForViolin_to_HTML.py")
+logger.setLevel(logging.INFO)
+
 parser = argparse.ArgumentParser(description='Show life expectancy statistics or histogram from US_A_USALEEP.csv or equivalent life table .csv or .txt', usage='Pandas_Parsing_CSV.py filepath/data_table.csv')
 
 parser.add_argument('filename', nargs='+', type=ext_check('.csv', '.txt', argparse.FileType('r')))
@@ -53,6 +57,16 @@ parser.add_argument('--titleString', '-t', default='United_States', help="--outp
 parser.add_argument('--stateCodes', '-c', nargs='+', type=str, default=['13'], help='--stateCodes expects one to three integers separated by a space, integer must be less than 57.')
 
 args = parser.parse_args()
+
+## configuring the stream handler for logging
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+#add formatter to ch
+ch.setFormatter(formatter)
+#add ch to logger
+logger.addHandler(ch)
 
 ## Dictionary to convert stateCodes to state names
 stateCodesDict = {'1':'Alabama', '2':'Alaska', '4':'Arizona', '5':'Arkansas', '6':'California', '8':'Colorado',
@@ -222,11 +236,12 @@ def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp, titleStr, codes, stateC
         fig = fig.add_trace(go.Violin(y=tempSeries[tempSeries>0.0], name=item, box_visible=True, line_color='black', meanline_visible=True, fillcolor=colors[ii]))
         ii = ii + 1
     fig.update_layout(title="%s Life Expectancy (2010-2015)" % (titleStr), xaxis_title="Census Tract Groupings", yaxis_title="Age in Years")
-    plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyViolin_2state_" + titleStr + ".html")
+    plt.offline.plot(fig, filename="/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/plotlyViolin_3state_" + titleStr + ".html")
 
-
+logger.info("Parsing whole dataset %s." % (getIsolateStr(args.filename[0].name)))
 allLifeExpectancy = simple_CSV_File_Processor(args.filename)
 
+logger.info("Retrieving data for selected state codes.")
 statesLifeExpect = state_CSV_File_Processor(args.filename, codes, stateCodesDict)
 
 #print(statesLifeExpect.tail())
@@ -235,10 +250,13 @@ statesLifeExpect = state_CSV_File_Processor(args.filename, codes, stateCodesDict
 if(len(codes) == 0):
     plotSingleViolinLifeExp(allLifeExpectancy, args.titleString)
 elif(len(codes) == 1):
+    logger.info("Plotting census tract distributions for U.S. and 1 state.")
     plotDoubleViolinLifeExp(allLifeExpectancy, statesLifeExpect, args.titleString, codes, stateCodesDict)
 elif(len(codes) == 2):
+    logger.info("Plotting census tract distributions for U.S. and 2 states.")
     plotTripleViolinLifeExp(allLifeExpectancy, statesLifeExpect, args.titleString, codes, stateCodesDict)
 elif(len(codes) == 3):
+    logger.info("Plotting census tract distributions for U.S. and 3 states.")
     plotQuadrupleViolinLifeExp(allLifeExpectancy, statesLifeExpect, args.titleString, codes, stateCodesDict)
 else:
     print("EXCEPTION: Current version of Plotly_ParseForViolin_to_HTML.py not able to show more than 4 violin plots.\nPlease select one to three numbers between 1 and 56.\n.\n.\n.")
