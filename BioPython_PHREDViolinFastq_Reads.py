@@ -178,7 +178,59 @@ def plotDoubleReadFiles(readPHREDDF, choice, title, rQ30, rLen, fileMean, fileMe
         axes1.text(0.5, 24, "Q30 = " + annotStr1 + "%", fontsize=24)
         annotStr2 = "%0.2f" % (100*rQ30[1]/rLen[1])
         axes1.text(1.5, 24, "Q30 = " + annotStr2 + "%", fontsize=24)
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinPHRED_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violin2filePHRED_' + fileTitle + '.png')
+
+def plotTripleReadFiles(readPHREDDF, choice, title, rQ30, rLen, fileMean, fileMedian):
+    SMALL_SIZE = 32
+    MEDIUM_SIZE = 36
+    BIG_SIZE = 40
+    colors = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00']
+    fig1, axes1 = plt.subplots(figsize=(25,19))
+    axes1.xaxis.label.set_size(MEDIUM_SIZE)
+    axes1.yaxis.label.set_size(MEDIUM_SIZE)
+    axes1.tick_params(axis='x', labelsize=SMALL_SIZE)
+    axes1.tick_params(axis='y', labelsize=SMALL_SIZE)
+    dfCols = list(readPHREDDF)
+    fileTitle = dfCols[0] + "_thru_" + dfCols[len(dfCols) - 1]
+    readPhred1 = readPHREDDF[dfCols[0]]
+    readPhred2 = readPHREDDF[dfCols[1]]
+    readPhred3 = readPHREDDF[dfCols[2]]
+    filteredReadPhred1 = readPhred1[~np.isnan(readPhred1)]
+    filteredReadPhred2 = readPhred2[~np.isnan(readPhred2)]
+    filteredReadPhred3 = readPhred3[~np.isnan(readPhred3)]
+    medianprops = dict(linewidth=6, color='black')
+    whiskerprops = dict(linewidth=5, color='black')
+    capprops = dict(linewidth=5, color='black')
+    x_labels = [dfCols[0], dfCols[1], dfCols[len(dfCols) -1]]
+    vp = axes1.violinplot([filteredReadPhred1, filteredReadPhred2, filteredReadPhred3], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
+    xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
+    xy = np.array(xy)
+    axes1.scatter(xy[:,0], xy[:,1],s=121, c="#A020F0", marker="D", zorder=3)
+    for pc, color in zip(vp['bodies'], colors):
+        pc.set_facecolor(color)
+        pc.set_edgecolor('black')
+        pc.set_alpha(0.6)
+    vp['cmeans'].set_visible(False)
+    vp['cmedians'].set_colors('black')
+    vp['cmedians'].set_linewidth(3)
+    axes1.set_title(title, fontsize = BIG_SIZE)
+    axes1.set(ylabel='Read PHRED Scores')
+    axes1.set(xlabel='Fastq Files')
+    annotStrA = "Median = %0.2f\nMean = %0.2f" % (fileMedian[0], fileMean[0])
+    axes1.text(0.5, 25, annotStrA, fontsize=26)
+    annotStrB = "Median = %0.2f\nMean = %0.2f" % (fileMedian[1], fileMean[1])
+    axes1.text(1.5, 25, annotStrB, fontsize=26)
+    annotStrC = "Median = %0.2f\nMean = %0.2f" % (fileMedian[2], fileMean[2])
+    axes1.text(2.5, 25, annotStrC, fontsize=26)
+    if(choice == 'Y'):
+        annotStr1 = "%0.2f" % (100*rQ30[0]/rLen[0])
+        axes1.text(0.5, 24, "Q30 = " + annotStr1 + "%", fontsize=24)
+        annotStr2 = "%0.2f" % (100*rQ30[1]/rLen[1])
+        axes1.text(1.5, 24, "Q30 = " + annotStr2 + "%", fontsize=24)
+        annotStr3 = "%0.2f" % (100*rQ30[2]/rLen[2])
+        axes1.text(2.5, 24, "Q30 = " + annotStr3 + "%", fontsize=24)
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violin3filePHRED_' + fileTitle + '.png')
 
 
 def plotMultiReadFiles(readPHREDDF, choice, title, rQ30, rLen, fileMean, fileMedian):
@@ -240,7 +292,7 @@ def plotMultiReadFiles(readPHREDDF, choice, title, rQ30, rLen, fileMean, fileMed
     axes1.set_title(title, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read PHRED Scores')
     axes1.set(xlabel='Fastq Files')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/ViolinPHREDqual_' + fileTitle + '.png')
+    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/ViolinMultiPHRED_' + fileTitle + '.png')
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
@@ -375,8 +427,8 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2, logger):
 ## for three or four files, invoke plotMultiReadFiles
     elif((len(fnames) > 2) and (len(fnames) < 7)):
         ii = 0
-        rQ30 = [0, 0, 0, 0, 0, 0]
-        rLen = [1, 1, 1, 1, 1, 1]
+        rQ30 = [0, 0, 0, 0]
+        rLen = [1, 1, 1, 1]
         logger.info("Parsing " + str(len(fnames)) + " fastq files.")
         readPhredDF = pd.Series(dtype=int)
         readPhredDF2 = pd.Series(dtype=int)
@@ -415,7 +467,6 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2, logger):
             fileMean.append(readPHREDDF[c].mean())
             fileMedian.append(readPHREDDF[c].median())
 
-
         if(choice1 == 'S'):
             for cols in dfCols:
                 print("%s total average PHRED is %0.2f" % (cols, readPHREDDF[cols].mean() ))
@@ -439,13 +490,19 @@ def PHREDOfFastqReads(fnames, title, choice1, choice2, logger):
         else:
         ## Call function to plot more than two boxplots
             logger.info("Plotting series from " + str(len(fnames)) + " fastq files.")
+            #print(list(readPHREDDF))
             plotMultiReadFiles(readPHREDDF, choice2, title, rQ30, rLen, fileMean, fileMedian)
             
 ## Exit on error if input files exceeds 6
 if(len(args.filename) > 6):
     sys.exit("BioPython_LengthMultiFastq_Reads.py accepts no more than six fastq files as input.")
 
-## Invoke function that counts NGS reads for each file in command-line arguments
+verifyUniqueFiles = [getIsolateStr(f.name) for f in args.filename]
 
+#Check for redundant/duplicated file input, print(verifyUniqueFiles)
+if(len(verifyUniqueFiles) > len(set(verifyUniqueFiles))):
+    sys.exit("Identical filenames detected, check input.")
+
+## Invoke function that counts NGS reads for each file in command-line arguments
 PHREDOfFastqReads(args.filename, args.titleString, args.outputType, args.showQ30, logger)
 
