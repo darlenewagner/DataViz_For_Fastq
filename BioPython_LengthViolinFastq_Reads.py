@@ -38,8 +38,22 @@ def getIsolateStr(filePathString):
 logger = logging.getLogger("BioPython_LengthViolinFastq_Reads.py")
 logger.setLevel(logging.INFO)
 
+## Usage statement
+usage_text = ''' Examples:
+
+BioPython_LengthViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType S (for read length cumulative summary)
+
+BioPython_LengthViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType L (for tab-delimited list of read length output to STDIN)
+
+BioPython_LengthViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType P (for plot) --titleString "Raw Reads Lengths"
+
+BioPython_LengthViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType L (for tab-delimited list of insert lengths output to STDIN)
+
+'''
+
+
 ## Initialize argparse object as 'parser'
-parser = argparse.ArgumentParser(description='Show read count and base pair count of one to six filename.fastq files (alternate: Insert length .tsv files)', usage='BioPython_Parsing_FASTQ.py filepath/filename1.fastq filepath/filename2.fastq (optional)')
+parser = argparse.ArgumentParser(description='Show read lengths of one to six filename.fastq files (alternate: Insert length .tsv files)', usage=usage_text)
 
 ## Add attribute 'filename' (the .fastq input file) to object 'parser'
 parser.add_argument('filename', nargs='+', type=ext_check('.fastq', '.tsv', '.csv', argparse.FileType('r')))
@@ -390,6 +404,13 @@ if(len(args.filename) > 6):
     sys.exit("BioPython_LengthMultiFastq_Reads.py accepts no more than six .fastq files as input.")
 
 fileStr = getIsolateStr(args.filename[0].name)
+
+verifyUniqueFiles = [getIsolateStr(f.name) for f in args.filename]
+
+#Check for redundant/duplicated file input, print(verifyUniqueFiles)
+if(len(verifyUniqueFiles) > len(set(verifyUniqueFiles))):
+    sys.exit("Identical filenames detected, check input.")
+
 
 if(fileStr.endswith('.fastq')):
     ## Invoke function that plots NGS reads for each file in command-line arguments
