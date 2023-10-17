@@ -42,6 +42,8 @@ usage_text = ''' Examples:
 
 BioPython_PHREDViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType S (for text summary)
 
+BioPython_PHREDViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType L (for tab-delimited list of values output to STDIN)
+
 BioPython_PHREDViolinFastq_Reads.py filepath/filename1.fastq filepath/filename2.fastq (optional) filepath/filename3.fastq (optional) --outputType P (for plot) --titleString "Raw Reads PHRED Scores" --showQ30 Y
  
 '''
