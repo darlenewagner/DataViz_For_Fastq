@@ -36,9 +36,23 @@ parser.add_argument('filename', nargs='+', type=ext_check('.fastq', argparse.Fil
 ## Add attribute '--outputType' to object 'parser'
 parser.add_argument('--outputType', '-o', default='S', choices=['S', 'L', 'P'], help="--outputType S for simple statistics, --outputType L for list of all read lengths, and --outputType P for matplotlib plots")
 
+## Set up logger to show runtime progress to the user
+logger = logging.getLogger("BioPython_ReadLength_OneOrTwo_Fastq.py")
+logger.setLevel(logging.INFO)
+
 parser.add_argument('--titleString', '-t', default='Read Lengths', help="--titleString 'title string for plot and filename'")
 
 args = parser.parse_args()
+
+## configuring the stream handler for logging
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+#add formatter to ch
+ch.setFormatter(formatter)
+#add ch to logger
+logger.addHandler(ch)
 
 ## Function to plot read lengths of one .fastq file
 def plotSingleReadLengths(readLengths, fileStr, titleStr):
@@ -54,7 +68,7 @@ def plotSingleReadLengths(readLengths, fileStr, titleStr):
     axes1.set_title(titleStr, fontsize = BIG_SIZE)
     axes1.set(ylabel='Read Counts')
     axes1.set(xlabel='Read Lengths')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/readLength_' + fileStr + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD-OD/OI/ncbs/share/out/PPLB/PPLB-test/readLength_' + fileStr + '.png')   
 ## Function to plot read lengths of two .fastq files
 def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2, titleStr):
     SMALL_SIZE = 22
@@ -77,11 +91,11 @@ def plotDoubleReadLengths(readLengths1, readLengths2, fileStr1, fileStr2, titleS
     axes1[1].set_title(titleStr + ", B", fontsize = BIG_SIZE)
     axes1[1].set(ylabel='Read Counts')
     axes1[1].set(xlabel='Read Lengths')
-    fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/readLen_' + fileStr1 + '_' + fileStr2 + '.png')   
+    fig1.savefig('/scicomp/groups/OID/NCIRD-OD/OI/ncbs/share/out/PPLB/PPLB-test/readLen_' + fileStr1 + '_' + fileStr2 + '.png')   
 
 
 ## Function to iterate through the .fastq input file and count NGS reads of non-zero length
-def lengthOfFastqReads(fnames, choice, titleStr):
+def lengthOfFastqReads(fnames, choice, titleStr, logger):
     readCount = 0
     readLengths = []
     readLengths2 = []
@@ -98,6 +112,7 @@ def lengthOfFastqReads(fnames, choice, titleStr):
             print("%s" % getIsolateStr(fnames[f].name))
             [print(item) for item in readLengths]
         else:
+            logger.info("Plotting series read lengths from " + str(len(fnames)) + " fastq files.")
             plotSingleReadLengths(readLengths, getIsolateStr(fnames[f].name), titleStr)
     elif(len(fnames) == 2):
         with open(fnames[0].name, 'r') as fastq:
@@ -139,6 +154,7 @@ def lengthOfFastqReads(fnames, choice, titleStr):
                     print("NaN\t%i" % (readLengths2[jj]))
                     jj = jj + 1
         else:
+            logger.info("Plotting series read lengths from " + str(len(fnames)) + " fastq files.")
             plotDoubleReadLengths(readLengths, readLengths2, getIsolateStr(fnames[0].name), getIsolateStr(fnames[1].name), titleStr)
                 
 ## Exit on error if input files exceeds 2
@@ -147,8 +163,5 @@ if(len(args.filename) > 2):
 
 ## Invoke function that counts NGS reads for each file in command-line arguments
 
-lengthOfFastqReads(args.filename, args.outputType, args.titleString)
-
-
-
+lengthOfFastqReads(args.filename, args.outputType, args.titleString, logger)
 
