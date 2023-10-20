@@ -33,6 +33,10 @@ def getIsolateStr(filePathString):
 	fileString = splitStr[fileNameIdx]
 	return fileString
 
+## Set up logger to show runtime progress to the user
+logger = logging.getLogger("Pandas_ParseForViolin_to_HTML.py")
+logger.setLevel(logging.INFO)
+
 ## Data Frame of life expectancies broken down by state
 statesLifeExpect = pd.DataFrame()
 
@@ -49,6 +53,16 @@ parser.add_argument('--titleString', '-t', default='United States', help="--outp
 parser.add_argument('--stateCodes', '-c', nargs='+', type=str, default=['13', '54'], help='--stateCodes expects one to three integers separated by a space, integer must be less than 57.')
 
 args = parser.parse_args()
+
+## configuring the stream handler for logging
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+#add formatter to ch
+ch.setFormatter(formatter)
+#add ch to logger
+logger.addHandler(ch)
 
 ## Dictionary to convert stateCodes to state names
 stateCodesDict = {'1':'Alabama', '2':'Alaska', '4':'Arizona', '5':'Arkansas', '6':'California', '8':'Colorado',
@@ -74,27 +88,6 @@ def add_label(violin, label):
     color = violin["bodies"][0].get_facecolor().flatten()
     labels.append((mpatches.Patch(color=color), label))
 
-
-#def make_violinplot(x1, x2, simpDataFrame, my_labels, my_colors):
-    #horizontal_concat = pd.concat([x1, x2], axis=1)
-    #fig1 = plt.subplots(figsize=(26,19))
-    #print(list(simpDataFrame))
-    #fig = sns.violinplot(data=simpDataFrame, cut=0, inner='box', showmeans=True, showmedians=True).get_figure
-    #fig.tick_params(axis='x', labelsize=10)
-    #fig.set_xticks(np.arange(1, len(['USA', 'DC'])+1), ['USA', 'DC'])
-    #fig.set_xticklabels(['USA', 'DC'])
-
-    #for body, color in zip(parts['bodies'], my_colors):
-    #    body.set_facecolor(color)
-    #    parts['cmeans'].set_color('red')
-    #    parts['cmedians'].set_color('blue')
-    
-    #
-
-
-    #axes1.title("U.S. and Washington D.C. Life Expectancy, (2010-2015)")
-    #plt.rcParams["figure.figsize"] = [8,8]
-    #return fig
 
 ## Read the life expectancy column, 'e(0)'
 def simple_CSV_File_Processor(fname, choice):
@@ -150,10 +143,10 @@ def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
             thirdExpect = columns['e(0)']
             thirdFinExpect = [float(i) for i in thirdExpect]
 
-    print(len(firstFinExpect))
+    #print(len(firstFinExpect))
     
     if(len(stateCodes) > 1):
-        print(len(secondFinExpect))
+        #print(len(secondFinExpect))
         if(len(secondFinExpect) > len(firstFinExpect)):
             extend_length = len(secondFinExpect) - len(firstFinExpect)
             pad = 0
@@ -167,7 +160,7 @@ def state_CSV_File_Processor(fname, stateCodes, stateCodesDict):
                 secondFinExpect.append(0)
                 pad = pad + 1
     if(len(stateCodes) > 2):
-        print(len(thirdFinExpect))
+        #print(len(thirdFinExpect))
         if(len(thirdFinExpect) > len(secondFinExpect)):
             extend_length = len(thirdFinExpect) - len(secondFinExpect)
             pad = 0
@@ -279,13 +272,14 @@ def plotDoubleViolinLifeExp(allLifeExp, stateLifeExp, mean, stdDev, fileStr, tit
     ##fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLifeExp_1state_' + titleStr + '.png')
     #htm_str = mpld3.fig_to_html(make_violinplot(allLifeExp['USA'], stateLifeExp[stateCodesDict[stateCodes[0]]], pd.concat([allLifeExp, stateLifeExp], axis=0), my_labels, my_colors))
     htm_str = mpld3.fig_to_html(fig1)
-    htm_file = open("/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/seabornFig_1state.html", "w")
+    htm_file = open("/scicomp/groups/OID/NCIRD-OD/OI/ncbs/share/out/PPLB/PPLB-test/" + titleStr + "_1state.html", "w")
     htm_file.write(htm_str)
     htm_file.close()
 
 
 ## Function to plot read lengths of three life expectancy series
 def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdDev, fileStr, titleStr, stateCodes, stateCodesDict):
+    #print(len(stateLifeExp1))
     SMALL_SIZE = 32
     MEDIUM_SIZE = 36
     BIG_SIZE = 40
@@ -303,7 +297,7 @@ def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdD
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
     x_labels = ['U.S.', stateCodesDict[stateCodes[0]], stateCodesDict[stateCodes[1]] ]
-    vp = axes1.violinplot([allLifeExp, stateLifeExp1, stateLifeExp2], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    vp = axes1.violinplot([allLifeExp['USA'], stateLifeExp1, stateLifeExp2], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
     xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
     xy = np.array(xy)
@@ -322,13 +316,14 @@ def plotTripleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, mean, stdD
     ## Old command for saving figure without embedding in html
     ## fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLifeExp_2state_' + titleStrMod + '.png')
     htm_str = mpld3.fig_to_html(fig1)
-    htm_file = open("/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/indexFig_2state.html", "w")
+    htm_file = open("/scicomp/groups/OID/NCIRD-OD/OI/ncbs/share/out/PPLB/PPLB-test/" + titleStr + "_2state.html", "w")
     htm_file.write(htm_str)
     htm_file.close()
     
 
 ## Function to plot read lengths of three life expectancy series
 def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, stateLifeExp3, mean, stdDev, fileStr, titleStr, stateCodes, stateCodesDict):
+    #print(len(stateLifeExp1))
     SMALL_SIZE = 30
     MEDIUM_SIZE = 36
     BIG_SIZE = 38
@@ -347,7 +342,7 @@ def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, stateLi
     whiskerprops = dict(linewidth=5, color='black')
     capprops = dict(linewidth=5, color='black')
     x_labels = ['U.S.', stateCodesDict[stateCodes[0]], stateCodesDict[stateCodes[1]], stateCodesDict[stateCodes[2]] ]
-    vp = axes1.violinplot([allLifeExp, stateLifeExp1, stateLifeExp2, stateLifeExp3], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
+    vp = axes1.violinplot([allLifeExp['USA'], stateLifeExp1, stateLifeExp2, stateLifeExp3], showmedians=True, showmeans=True, widths=0.95, showextrema=False)
     axes1.set_xticks(np.arange(1, len(x_labels) + 1), labels=x_labels)
     xy = [[l.vertices[:,0].mean(),l.vertices[0,1]] for l in vp['cmeans'].get_paths()]
     xy = np.array(xy)
@@ -365,12 +360,14 @@ def plotQuadrupleViolinLifeExp(allLifeExp, stateLifeExp1, stateLifeExp2, stateLi
     titleStrMod = re.sub(r',', '', titleStr)
     #htm = fig1.savefig('/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/violinLifeExp_3state_' + titleStrMod + '.png')
     htm_str = mpld3.fig_to_html(fig1)
-    htm_file = open("/scicomp/groups/OID/NCIRD/DVD/GRVLB/pdd/Temp/Darlene/indexFig_3state.html", "w")
+    htm_file = open("/scicomp/groups/OID/NCIRD-OD/OI/ncbs/share/out/PPLB/PPLB-test/" + titleStr + "_3state.html", "w")
     htm_file.write(htm_str)
     htm_file.close()
 
+logger.info("Parsing whole dataset %s." % (getIsolateStr(args.filename[0].name)))
 allLifeExpectancy = simple_CSV_File_Processor(args.filename, args.outputType)
 
+logger.info("Retrieving data for selected state codes.")
 statesLifeExpect = state_CSV_File_Processor(args.filename, codes, stateCodesDict)
 
 #print(statesLifeExpect.tail())
@@ -421,8 +418,14 @@ else:
     if(len(codes) == 0):
         plotSingleViolinLifeExp(allLifeExpectancy, mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString)
     elif(len(codes) == 1):
+        logger.info("Plotting census tract distributions for U.S. and 1 state.")
         plotDoubleViolinLifeExp(allLifeExpectancy, statesLifeExpect, mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString, codes, stateCodesDict)
     elif(len(codes) == 2):
+        logger.info("Plotting census tract distributions for U.S. and 2 states.")
         plotTripleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], temp2Series[temp2Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString, codes, stateCodesDict)
     elif(len(codes) == 3):
+        logger.info("Plotting census tract distributions for U.S. and 3 states.")
         plotQuadrupleViolinLifeExp(allLifeExpectancy, temp1Series[temp1Series!=0], temp2Series[temp2Series!=0], temp3Series[temp3Series!=0], mean, stdDev, getIsolateStr(args.filename[0].name), args.titleString, codes, stateCodesDict)
+    else:
+        print("EXCEPTION: Current version of Pandas_ParseForViolin_to_HTML.py not able to show more than 4 violin plots.\nPlease select one to three numbers between 1 and 56.\n.\n.\n.")
+        sys.exit()
